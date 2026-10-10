@@ -55,3 +55,11 @@ Interactive AI-powered working desk demonstrating how Anushka Saha would run the
 - Run cards show what the agent actually received (stored on run)
 - Founder room: illustrative scenario without URL; three approaches (big idea / practical story / challenging question)
 - Tested iteration_4: 7/7
+
+## Iteration 4 (selective improvements, 2026-10-10)
+- Decision-first Daily Desk (My desk: recorded decisions, outstanding questions/fact checks, next actions) above ANA briefing
+- Sidebar: Core work (6) + collapsible More (7); nothing removed
+- Founder conversation notes: conversation meta + pasted words; edith.founder_notes classifies DIRECT QUOTE / PARAPHRASE / INTERPRETATION / NEEDS SIGN-OFF
+- LIVE research: Anthropic web_search server tool via Emergent key for catherine.live_research and catherine.event_audience; results carry source URL, official/secondary flag, dates and deadline separately, unknowns; save to radar with verification live_official/live_secondary
+- Tested iteration_5: 6/6. Test data reset afterwards (Freudenberg draft back to v1, no decision)
+- Known limit: live search tends to return aggregator (secondary) sources; official-site verification remains manual
