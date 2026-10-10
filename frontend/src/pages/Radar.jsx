@@ -105,7 +105,7 @@ export default function Radar() {
   const filtered = useMemo(() => items.filter((o) =>
     (!q.text || `${o.name} ${o.relevance} ${o.location}`.toLowerCase().includes(q.text.toLowerCase())) && (!q.market || o.market === q.market) && (!q.type || o.type === q.type) && (!q.status || o.status === q.status) &&
     (!q.from || (o.start_date && o.start_date >= q.from)) && (!q.to || (o.start_date && o.start_date <= q.to)) &&
-    (tab === "all" || (tab === "verified" ? o.verification === "verified_dates" : o.verification !== "verified_dates"))
+    (tab === "all" || (tab === "verified" ? ["verified_dates", "live_official"].includes(o.verification) : !["verified_dates", "live_official"].includes(o.verification)))
   ).sort((a, b) => (a.start_date || "9").localeCompare(b.start_date || "9")), [items, q, tab]);
   const byMonth = useMemo(() => filtered.reduce((m, o) => { const k = o.start_date ? new Date(o.start_date + "T12:00").toLocaleDateString("en-GB", { month: "long", year: "numeric" }) : "Undated"; (m[k] = m[k] || []).push(o); return m; }, {}), [filtered]);
   const sq = (k) => (e) => setQ({ ...q, [k]: e.target.value });
@@ -117,8 +117,8 @@ export default function Radar() {
       <PageHead n="05" kicker="Opportunity Radar" title="Where should Conduct" accent=" show up?" sub="Discover, verify, prioritise. Nothing becomes a commitment because an agent suggested it." />
       <section className="bg-linen text-chocolate px-5 md:px-10 pb-16 space-y-10">
         <div className="bg-tangelo text-linen p-5" data-testid="research-mode-banner">
-          <p className="kicker mb-1">Research mode: manual, live web research NOT configured</p>
-          <p className="font-mono text-xs leading-relaxed">CATHERINE does not browse the web in this deployment. She produces research plans, assesses records you add, and labels everything else as an unverified lead. The seeded records with "Dates verified" were checked by the builder via web search before launch (source and check date shown). A Perplexity/Tavily research integration can be added later.</p>
+          <p className="kicker mb-1">Live research: connected (Claude web search via the Emergent key)</p>
+          <p className="font-mono text-xs leading-relaxed">"Live search" runs real web searches and returns the URL behind every result. Secondary sources (aggregators, blogs) are flagged for checking on the organiser's own site, and anything CATHERINE could not find is listed as not found. The research plan, assessments and constraints cards do not search; they work from saved records. Seeded records were checked by the builder before launch.</p>
         </div>
 
         <div>
@@ -129,7 +129,36 @@ export default function Radar() {
             <Field label="Opportunity types"><input className="field" value={plan.types} onChange={(e) => setPlan({ ...plan, types: e.target.value })} /></Field>
             <Field label="Date range"><input className="field" value={plan.date_range} onChange={(e) => setPlan({ ...plan, date_range: e.target.value })} /></Field>
           </div>
-          <AgentRunCard agent="catherine" task="catherine.research_plan" label="Research plan" getInput={() => plan}
+          <AgentRunCard agent="catherine" task="catherine.live_research" label="Live search" testid="live-research" getInput={() => ({ ...plan, today: todayISO() })} hint="Runs real web searches. Takes 1 to 3 minutes."
+            render={(o, r) => (
+              <div className="space-y-4" data-testid="live-results">
+                <p className="font-mono text-xs"><Claim text={o.query_interpreted} /></p>
+                <p className="font-mono text-[11px] text-chocolate/60">Searched for: {(o.searched_for || []).join(" · ")}</p>
+                {(o.opportunities || []).map((x, i) => {
+                  const saved = items.some((it) => it.source_url === x.source_url && it.name === x.name);
+                  return (
+                    <div key={i} className="border border-chocolate/30 p-3 grid md:grid-cols-[1fr_auto] gap-3" data-testid={`live-result-${i}`}>
+                      <div className="font-mono text-xs space-y-1">
+                        <p className="font-bold text-sm">{x.name} <span className={`ml-1 font-mono text-[9px] tracking-[0.12em] uppercase px-1.5 py-0.5 ${x.source_type === "official" ? VERIF.live_official.cls : VERIF.live_secondary.cls}`}>{x.source_type === "official" ? "Official source" : "Secondary source, verify"}</span></p>
+                        <p>{x.location} · {x.market} · <b>Dates:</b> {x.start_date}{x.end_date && x.end_date !== x.start_date ? ` to ${x.end_date}` : ""} · <b>Deadline:</b> {x.deadline} · <b>Cost:</b> {x.cost}</p>
+                        <p className="text-chocolate/80"><span className="text-tangelo">Evidence · </span>{x.evidence}</p>
+                        <p className="text-chocolate/80"><span className="text-tangelo">Why Conduct · </span>{x.why_relevant}</p>
+                        {x.unknowns?.length > 0 && <p className="text-chocolate/60">Unknown: {x.unknowns.join("; ")}</p>}
+                        <a href={x.source_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-tangelo underline-grow">{x.source_url} <ExternalLink className="w-3 h-3" /></a>
+                      </div>
+                      <Btn variant="line" className="!py-1 self-start" data-testid={`live-save-${i}`} disabled={saved} onClick={async () => {
+                        const dt = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(v || "") ? v : "");
+                        await create("opportunities", { ...BLANK, name: x.name, type: TYPES.includes(x.type) ? x.type : "other", market: MARKETS.includes(x.market) ? x.market : "Other", location: x.location, start_date: dt(x.start_date), end_date: dt(x.end_date), deadline: x.deadline, cost: x.cost, source_url: x.source_url, verification: x.source_type === "official" ? "live_official" : "live_secondary", audience: x.audience, relevance: x.why_relevant, participation: x.participation_options, next_action: x.next_action, notes: `Live search ${r.created_at.slice(0, 10)} (run ${r.id.slice(0, 8)}). Evidence: ${x.evidence}. Unknown: ${(x.unknowns || []).join("; ")}`, source_checked: `${r.created_at.slice(0, 10)} (live web search)` });
+                        toast.success("Saved to the radar with its source and unknowns"); load();
+                      }}>{saved ? "Saved" : "Save to radar"}</Btn>
+                    </div>
+                  );
+                })}
+                {o.could_not_find?.length > 0 && <div><p className="kicker text-tangelo mb-1">Could not find</p>{o.could_not_find.map((x, i) => <p key={i} className="font-mono text-xs">· {x}</p>)}</div>}
+                {o.caveats && <Note>{o.caveats}</Note>}
+              </div>
+            )} />
+          <AgentRunCard agent="catherine" task="catherine.research_plan" label="Research plan (no search)" getInput={() => plan}
             render={(o) => (
               <div className="space-y-5">
                 <Tag tone="solid">{o.mode_note}</Tag>

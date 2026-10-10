@@ -28,6 +28,8 @@ export const VERIF = {
   verified_dates: { label: "Dates verified", cls: "bg-[#2F7D4F] text-linen" },
   needs_validation: { label: "Needs validation", cls: "bg-botticelli text-chocolate" },
   idea: { label: "Idea, not an event", cls: "border border-chocolate/50 text-chocolate" },
+  live_official: { label: "Live search · official source", cls: "bg-[#2F7D4F] text-linen" },
+  live_secondary: { label: "Live search · secondary source, verify", cls: "bg-botticelli text-chocolate" },
 };
 
 export const OPP_STATUS = ["new", "saved", "watch", "shortlisted", "rejected", "converted"];

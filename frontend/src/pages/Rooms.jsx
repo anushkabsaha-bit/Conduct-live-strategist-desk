@@ -35,7 +35,8 @@ export const FOUNDER = {
     { k: "scenario", label: "No URL? Choose an illustrative scenario", options: ["Enterprise transformation conference (CIOs, SAP leaders)", "Developer conference (engineers)", "Founder and investor stage", "Partner and consultant roundtable", "University / graduate talent event"] },
     { k: "objective", label: "Objective" }, { k: "key_message", label: "Key message I think matters", rows: 2 }, { k: "sources", label: "Source material available", rows: 2 },
     { k: "topic", label: "Topic", rows: 3 }, { k: "session", label: "Session details available", rows: 3 },
-    { k: "founder_notes", label: "Founder's own words (from a real conversation)", wide: true, rows: 3, ph: "Paste only what the founder actually said" },
+    { k: "conversation_meta", label: "Conversation: who, when, context", ph: "e.g. 5-minute call with the founder, date, what it was for" },
+    { k: "founder_notes", label: "Founder's own words (paste from the real conversation)", wide: true, rows: 5, ph: "Paste only what was actually said. Use quotation marks for verbatim lines." },
   ],
   example: { name: "Illustrative: founder at an enterprise transformation conference", label: "ILLUSTRATIVE scenario. No confirmed appearance. Nothing here is attributed to the founder.", data: {
     speaker: "Jan Philipp Haas (illustrative)", event: "SAP TechEd 2026 (used as a real event example; no booking implied)", event_url: "https://www.sap.com/events/teched.html",
@@ -45,7 +46,8 @@ export const FOUNDER = {
     { agent: "edith", task: "edith.founder_messages", label: "Three approaches: big idea, practical story, challenging question" },
     { agent: "berdine", task: "berdine.founder_language", label: "Develop the language" },
     { agent: "ana", task: "ana.speaker_briefing", label: "Consolidated speaker briefing" },
-    { agent: "edith", task: "edith.founder_conversation", label: "Five-minute founder conversation" },
+    { agent: "edith", task: "edith.founder_conversation", label: "Five-minute founder conversation: questions to ask" },
+    { agent: "edith", task: "edith.founder_notes", label: "Sort the founder's actual words: quote, paraphrase, interpretation, sign-off", hint: "Paste real notes above first. EDITH only classifies what is there; nothing becomes approved for publication." },
   ],
   handoffs: [{ key: "content", label: "Content Desk" }, { key: "media", label: "Media Desk", path: "/media", status: "draft" }],
 };

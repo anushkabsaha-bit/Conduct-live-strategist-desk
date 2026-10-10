@@ -35,7 +35,7 @@ Context: You are running inside the "Conduct Communications Strategist Desk", an
 Truth rules (mandatory):
 - Use only: the original prompts, the 38-post LinkedIn dataset, the Growth OS document, the agent architecture, items stored in this app, and the SHARED CONTEXT supplied below.
 - Never invent historical performance, internal Conduct information, customer results, quotes, founder opinions, events, dates, deadlines, attendees, contacts, budgets or outcomes.
-- You have NO live web browsing in this deployment. Never say you searched, browsed or verified something online. If verification is needed, say exactly what to check and where.
+- You have NO live web browsing unless the TASK explicitly says web search is enabled for it. Without it, never say you searched, browsed or verified something online; say exactly what to check and where. With it, cite the exact URL you used for every fact and say when you could not find something.
 - Never claim another agent has completed work unless that work appears in SHARED CONTEXT. Otherwise describe it as a proposed next action.
 - Never promise virality or guaranteed engagement. Targets in the original prompts are targets, not forecasts.
 - Label claims where it matters using: [VERIFIED] public/verifiable fact, [DATASET] finding from the supplied 38-post data, [EXTERNAL] external info supplied by the user, [HYPOTHESIS], [ILLUSTRATIVE], [NEEDS APPROVAL].
@@ -47,7 +47,7 @@ AGENT_LAYERS = {
     "ana": "ANA layer: coordinate, do not do all the specialist work yourself. When you recommend specialist work, name the agent and phrase it as a proposal. Weigh impact, urgency, dependencies, confidence and effort; do not label everything urgent; explain trade-offs.",
     "agatha": "AGATHA layer: the dataset contains short descriptions and engagement counts only (no full post text, no impressions, no dates, no formats). Cite post ids (e.g. P12) for every evidence-based claim. If a word limit is given, enforce it; if not, do not invent a length rule unless clearly labelled [HYPOTHESIS]. With 38 rows and confounders (author, reposts, external amplification), state when the sample is too small.",
     "berdine": "BERDINE layer: no internal Conduct style guide has been supplied. Any voice judgement is against an INFERRED VOICE PROFILE built from the original prompt and public Conduct communications; say so. Preserve the author's intent.",
-    "catherine": "CATHERINE layer: research scope covers the UK, Germany/Europe, New York/US and other markets with evidence. Live web research is NOT configured. Work only from opportunity records supplied (with their source URLs and verification status) and clearly mark anything else as an UNVERIFIED LEAD to check on the official organiser site. Never state dates, deadlines, costs, speakers or contacts that are not in the supplied record.",
+    "catherine": "CATHERINE layer: research scope covers the UK, Germany/Europe, New York/US and other markets with evidence. Live web search is enabled only for tasks that say so. Otherwise work only from opportunity records supplied (with their source URLs and verification status) and clearly mark anything else as an UNVERIFIED LEAD to check on the official organiser site. Never state dates, deadlines, costs, speakers or contacts that are not in the supplied record.",
     "diana": "DIANA layer: clarify before polishing. Treat any SAP Score, joke, statistic or provocative claim as an event experience, never a factual statement about SAP or its customers. Budget figures must be ranges with explicit assumptions or marked unknown.",
     "edith": "EDITH layer: ask focused questions before building a narrative. Never invent customer success, metrics, testimonials or product capabilities. Separate verified facts from open questions, and what can be said publicly from what needs permission.",
 }
@@ -77,8 +77,13 @@ def build_system(agent_id, revision=None):
     return "\n\n".join(parts)
 
 
-async def llm_stream(system, text, session_id):
+WEB_SEARCH_TASKS = {"catherine.live_research", "catherine.event_audience"}
+
+
+async def llm_stream(system, text, session_id, web=False):
     chat = LlmChat(api_key=os.environ["EMERGENT_LLM_KEY"], session_id=session_id, system_message=system).with_model(*MODEL).with_params(max_tokens=8000)
+    if web:
+        chat = chat.with_tools([{"type": "web_search_20250305", "name": "web_search", "max_uses": 6}])
     async for ev in chat.stream_message(UserMessage(text=text)):
         if isinstance(ev, TextDelta):
             yield ev.content
@@ -86,9 +91,9 @@ async def llm_stream(system, text, session_id):
             break
 
 
-async def llm_complete(system, text, session_id):
+async def llm_complete(system, text, session_id, web=False):
     out = ""
-    async for chunk in llm_stream(system, text, session_id):
+    async for chunk in llm_stream(system, text, session_id, web):
         out += chunk
     return out
 

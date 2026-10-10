@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, PenLine, Compass, Mic, BookOpen, Rocket, Sparkles, Radar, Users, Newspaper, LineChart, Bot, Library, Search, ListChecks, Menu, X } from "lucide-react";
+import { LayoutDashboard, PenLine, Compass, Mic, BookOpen, Rocket, Sparkles, Radar, Users, Newspaper, LineChart, Bot, Library, Search, ListChecks, Menu, X, MoreHorizontal, ChevronDown } from "lucide-react";
 import { list } from "../lib/api";
 import { searchApi } from "./Room";
 
@@ -10,14 +10,14 @@ export const ROOMS = [
   { to: "/narrative", label: "Narrative Room", icon: Compass },
   { to: "/founder", label: "Founder & Exec Comms", icon: Mic },
   { to: "/stories", label: "Product & Customer Stories", icon: BookOpen },
-  { to: "/launch", label: "Integrated Launch", icon: Rocket },
-  { to: "/campaigns", label: "Campaign Studio", icon: Sparkles },
   { to: "/radar", label: "Opportunity Radar", icon: Radar },
-  { to: "/people", label: "People & Culture", icon: Users },
-  { to: "/media", label: "Reputation & Media", icon: Newspaper },
-  { to: "/impact", label: "Impact & Learning", icon: LineChart },
-  { to: "/agents", label: "Agent Room", icon: Bot },
-  { to: "/library", label: "Source Library", icon: Library },
+  { to: "/launch", label: "Integrated Launch", icon: Rocket, more: true },
+  { to: "/campaigns", label: "Campaign Studio", icon: Sparkles, more: true },
+  { to: "/people", label: "People & Culture", icon: Users , more: true },
+  { to: "/media", label: "Reputation & Media", icon: Newspaper , more: true },
+  { to: "/impact", label: "Impact & Learning", icon: LineChart , more: true },
+  { to: "/agents", label: "Agent Room", icon: Bot , more: true },
+  { to: "/library", label: "Source Library", icon: Library , more: true },
 ];
 const PATH = { tasks: "/", drafts: "/content", stories: "/stories", campaigns: "/campaigns", opportunities: "/radar", projects: "/", calendar: "/" };
 
@@ -47,14 +47,23 @@ export default function Shell() {
   const loc = useLocation();
   useEffect(() => { setOpen(false); list("tasks").then((t) => setOpenTasks(t.filter((x) => x.status !== "done").length)).catch(() => {}); }, [loc.pathname]);
   const current = ROOMS.find((r) => (r.to === "/" ? loc.pathname === "/" : loc.pathname.startsWith(r.to)));
+  const inMore = ROOMS.some((r) => r.more && loc.pathname.startsWith(r.to));
+  const [moreOpen, setMoreOpen] = useState(inMore);
+  useEffect(() => { if (inMore) setMoreOpen(true); }, [inMore]);
+  const item = (r, mobile) => (
+    <NavLink key={r.to} to={r.to} end={r.to === "/"} title={r.label} data-testid={`${mobile ? "m-" : ""}nav-${r.label.toLowerCase().replace(/[^a-z]+/g, "-")}`}
+      className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 border-l-[3px] transition-colors ${isActive ? "border-tangelo bg-linen/10 text-linen" : "border-transparent text-linen/55 hover:text-linen hover:bg-linen/5"}`}>
+      <r.icon className="w-4 h-4 shrink-0" />{(wide || mobile) && <span className="font-mono text-[10px] tracking-[0.14em] uppercase truncate">{r.label}</span>}
+    </NavLink>
+  );
   const nav = (mobile) => (
     <nav className="flex flex-col gap-0.5 py-3" data-testid={mobile ? "mobile-nav" : "main-nav"}>
-      {ROOMS.map((r) => (
-        <NavLink key={r.to} to={r.to} end={r.to === "/"} title={r.label} data-testid={`${mobile ? "m-" : ""}nav-${r.label.toLowerCase().replace(/[^a-z]+/g, "-")}`}
-          className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 border-l-[3px] transition-colors ${isActive ? "border-tangelo bg-linen/10 text-linen" : "border-transparent text-linen/55 hover:text-linen hover:bg-linen/5"}`}>
-          <r.icon className="w-4 h-4 shrink-0" />{(wide || open) && <span className="font-mono text-[10px] tracking-[0.14em] uppercase truncate">{r.label}</span>}
-        </NavLink>
-      ))}
+      {(wide || mobile) && <p className="px-4 pb-1 font-mono text-[9px] tracking-[0.2em] uppercase text-linen/35">Core work</p>}
+      {ROOMS.filter((r) => !r.more).map((r) => item(r, mobile))}
+      <button data-testid={`${mobile ? "m-" : ""}nav-more-toggle`} onClick={() => setMoreOpen(!moreOpen)} className="flex items-center gap-3 px-4 py-2.5 mt-2 text-linen/55 hover:text-linen border-t border-linen/10" title="More rooms">
+        <MoreHorizontal className="w-4 h-4 shrink-0" />{(wide || mobile) && <span className="font-mono text-[10px] tracking-[0.14em] uppercase flex-1 text-left">More</span>}{(wide || mobile) && <ChevronDown className={`w-3.5 h-3.5 transition-transform ${moreOpen ? "rotate-180" : ""}`} />}
+      </button>
+      {moreOpen && ROOMS.filter((r) => r.more).map((r) => item(r, mobile))}
     </nav>
   );
   return (

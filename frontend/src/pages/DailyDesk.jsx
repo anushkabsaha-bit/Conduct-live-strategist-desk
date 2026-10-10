@@ -9,7 +9,7 @@ import MakeTask from "../components/MakeTask";
 import WeekCalendar, { blocksOn } from "../components/WeekCalendar";
 import BlockDialog from "../components/BlockDialog";
 import { list, remove, update } from "../lib/api";
-import { AGENTS, todayISO } from "../lib/meta";
+import { AGENTS, fmtDate, todayISO } from "../lib/meta";
 
 const greet = () => { const h = new Date().getHours(); return h < 12 ? "Morning" : h < 18 ? "Afternoon" : "Evening"; };
 const IMP = { high: 0, medium: 1, low: 2 };
@@ -76,6 +76,39 @@ function Briefing({ o, nav }) {
   );
 }
 
+function MyDesk({ decisions, drafts, stories, open, tasks }) {
+  const name = (d) => drafts.find((x) => x.id === d.ref_id)?.title || stories.find((x) => x.id === d.ref_id)?.title || d.ref_type;
+  const editorial = decisions.filter((d) => !String(d.choice).startsWith("status:")).slice(0, 6);
+  const questions = [
+    ...drafts.filter((d) => (d.decision?.facts_to_check || "").trim()).map((d) => ({ k: d.id, t: d.decision.facts_to_check, w: `Fact check · ${d.title}`, to: `/content?draft=${d.id}` })),
+    ...stories.flatMap((s) => (s.open_questions || []).slice(0, 2).map((q, i) => ({ k: s.id + i, t: q, w: `Story · ${s.title}`, to: "/stories" }))),
+  ].slice(0, 7);
+  const undecided = drafts.filter((d) => !d.decision?.final && d.versions?.[0]?.text);
+  return (
+    <section className="bg-linen text-chocolate px-5 md:px-10 pb-14" data-testid="my-desk">
+      <Kicker n="A">My desk · decisions, questions and next actions</Kicker>
+      <div className="grid md:grid-cols-3 border-t border-l border-chocolate/30">
+        <div className="border-r border-b border-chocolate/30 p-6" data-testid="my-decisions">
+          <p className="font-display uppercase text-2xl mb-4">Decisions I've recorded</p>
+          {editorial.length ? editorial.map((d) => (
+            <div key={d.id} className="py-2 border-b border-chocolate/20 font-mono text-xs"><span className="kicker text-tangelo block">{fmtDate(d.created_at)} · {name(d)}</span><b>{d.choice}</b>{d.note ? `: ${d.note}` : ""}</div>
+          )) : <Empty title="No decisions yet.">Record one in Content Desk under My editorial decision.</Empty>}
+          {undecided.length > 0 && <p className="font-mono text-[11px] mt-3"><span className="text-tangelo">Waiting on my judgement: </span>{undecided.map((d) => <Link key={d.id} to={`/content?draft=${d.id}`} className="underline-grow mr-2">{d.title}</Link>)}</p>}
+        </div>
+        <div className="border-r border-b border-chocolate/30 p-6" data-testid="my-questions">
+          <p className="font-display uppercase text-2xl mb-4">Outstanding questions</p>
+          {questions.length ? questions.map((q) => <Link key={q.k} to={q.to} className="block py-2 border-b border-chocolate/20 font-mono text-xs hover:text-tangelo"><span className="kicker text-tangelo block">{q.w}</span>{q.t}</Link>) : <Empty title="Nothing open.">Facts to check and story questions collect here.</Empty>}
+        </div>
+        <div className="border-r border-b border-chocolate/30 p-6" data-testid="my-next-actions">
+          <p className="font-display uppercase text-2xl mb-4">Next actions</p>
+          {open.slice(0, 5).map((t) => <div key={t.id} className="py-2 border-b border-chocolate/20 font-mono text-xs"><span className="kicker text-tangelo block">{t.due ? `Due ${t.due}` : "No date"} · {t.status}</span>{t.next_action || t.title}</div>)}
+          {!open.length && <Empty title="Clear.">No open tasks.</Empty>}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function TaskRow({ t, reload }) {
   const [open, setOpen] = useState(false);
   const done = t.status === "done";
@@ -113,9 +146,10 @@ export default function DailyDesk() {
   const [drafts, setDrafts] = useState([]);
   const [stories, setStories] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [decisions, setDecisions] = useState([]);
   const [sel, setSel] = useState(null);
   const load = useCallback(() => {
-    list("calendar").then(setBlocks); list("tasks").then(setTasks); list("drafts").then(setDrafts); list("stories").then(setStories); list("projects").then(setProjects);
+    list("calendar").then(setBlocks); list("tasks").then(setTasks); list("drafts").then(setDrafts); list("stories").then(setStories); list("projects").then(setProjects); list("decisions").then(setDecisions);
   }, []);
   useEffect(load, [load]);
   const today = todayISO();
@@ -147,15 +181,16 @@ export default function DailyDesk() {
         <p className="font-hand text-xl text-chocolate/70 mt-6 -rotate-1">calendar blocks & tasks here are illustrative, not booked Conduct meetings.</p>
       </section>
 
+      <MyDesk decisions={decisions} drafts={drafts} stories={stories} open={open} tasks={tasks} />
       <section className="bg-chocolate text-linen px-5 md:px-10 py-14 md:py-20">
-        <Kicker n="A" dark>Today's overview · ANA's briefing</Kicker>
+        <Kicker n="B" dark>Supporting view · ANA's briefing from saved tasks and project state (runs only when you ask)</Kicker>
         <AgentRunCard dark agent="ana" task="ana.briefing" label="Daily briefing" testid="ana-briefing"
           hint="ANA reviews today's blocks, open tasks, drafts, stories and opportunity statuses, then ranks what deserves attention. Press Run to generate today's briefing."
           onDone={load} render={(o) => <Briefing o={o} nav={nav} />} />
       </section>
 
       <section className="bg-linen text-chocolate px-5 md:px-10 py-14 md:py-20">
-        <Kicker n="B">Today at a glance</Kicker>
+        <Kicker n="C">Today at a glance</Kicker>
         <div className="grid md:grid-cols-12 border-t border-l border-chocolate/30">
           <div className="md:col-span-5 border-r border-b border-chocolate/30 p-6" data-testid="today-blocks">
             <p className="font-display uppercase text-2xl mb-4">Today's calendar</p>
@@ -184,13 +219,13 @@ export default function DailyDesk() {
       <section className="bg-linen text-chocolate px-5 md:px-10 pb-14 md:pb-20">
         <div className="grid md:grid-cols-12 gap-10">
           <div className="md:col-span-7" data-testid="priorities-list">
-            <Kicker n="C">Today's priorities · from your saved tasks, by importance then due date</Kicker>
+            <Kicker n="D">Today's priorities · from your saved tasks, by importance then due date</Kicker>
             {open.length ? open.slice(0, 5).map((t) => <TaskRow key={t.id} t={t} reload={load} />) : <Empty title="Clear desk.">No open tasks. Turn any agent recommendation into a task with "Make task".</Empty>}
             {open.length > 5 && <details className="mt-4"><summary className="kicker text-tangelo cursor-pointer" data-testid="more-tasks">{open.length - 5} more open tasks</summary>{open.slice(5).map((t) => <TaskRow key={t.id} t={t} reload={load} />)}</details>}
             {followups.length > 0 && <p className="font-mono text-[11px] text-chocolate/60 mt-4">{followups.length} research / decision follow-ups among these.</p>}
           </div>
           <div className="md:col-span-5" data-testid="quick-actions">
-            <Kicker n="D">Quick actions</Kicker>
+            <Kicker n="E">Quick actions</Kicker>
             <div className="border-t-2 border-chocolate">
               {QUICK.map(([label, to, a], i) => (
                 <Link key={label} to={to} data-testid={`quick-action-${i}`} className="group flex items-center justify-between gap-4 py-4 border-b border-chocolate/30 hover:bg-chocolate hover:text-linen hover:px-4 transition-[background-color,color,padding] duration-300">
@@ -212,7 +247,7 @@ export default function DailyDesk() {
       </section>
 
       <section className="bg-linen text-chocolate px-5 md:px-10 pb-20 border-t border-chocolate/20 pt-14">
-        <Kicker n="E">The working week</Kicker>
+        <Kicker n="F">The working week</Kicker>
         <WeekCalendar blocks={blocks} reload={load} />
       </section>
       <BlockDialog open={!!sel} block={sel} onClose={() => setSel(null)} onSaved={load} />

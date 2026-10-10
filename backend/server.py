@@ -61,7 +61,7 @@ async def startup():
 @api.get("/")
 async def root():
     return {"app": "Conduct Communications Strategist Desk", "llm": "configured" if os.environ.get("EMERGENT_LLM_KEY") else "missing",
-            "web_research": "not_configured"}
+            "web_research": "anthropic_web_search"}
 
 
 # ---------- generic CRUD ----------
@@ -262,7 +262,7 @@ async def run_task(body: dict = Body(...)):
     run = {"id": str(uuid.uuid4()), "task": task, "agent": agent, "ref_type": ref_type, "ref_id": ref_id, "input": extra, "snapshot": snapshot,
            "status": "running", "output": {}, "received": ("\n\n".join(parts))[:8000], "created_at": now()}
     await db.runs.insert_one(dict(run))
-    asyncio.create_task(execute_run(run["id"], system, A.task_prompt(task, "\n\n".join(parts))))
+    asyncio.create_task(execute_run(run["id"], system, A.task_prompt(task, "\n\n".join(parts)), task in A.WEB_SEARCH_TASKS))
     return run
 
 
@@ -276,13 +276,13 @@ def no_dash(v):
     return v
 
 
-async def execute_run(run_id, system, prompt):
+async def execute_run(run_id, system, prompt, web=False):
     upd, raw = {}, ""
     try:
         for attempt in range(2):  # one automatic retry if the model returns malformed JSON
-            raw = await A.llm_complete(system, prompt, f"run-{run_id}-{attempt}")
+            raw = await A.llm_complete(system, prompt, f"run-{run_id}-{attempt}", web)
             try:
-                upd = {"output": no_dash(A.parse_json(raw)), "status": "ok", "attempts": attempt + 1}
+                upd = {"output": no_dash(A.parse_json(raw)), "status": "ok", "attempts": attempt + 1, "web_search": web}
                 break
             except json.JSONDecodeError:
                 if attempt:
