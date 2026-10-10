@@ -30,7 +30,7 @@ function Compare({ versions }) {
   const [a, setA] = useState(Math.max(0, versions.length - 2));
   const [b, setB] = useState(versions.length - 1);
   const d = useMemo(() => diff(versions[a].text, versions[b].text), [versions, a, b]);
-  const sel = (v, set) => <select className="field !w-auto" value={v} onChange={(e) => set(+e.target.value)}>{versions.map((x, i) => <option key={i} value={i}>v{x.n} · {x.note || x.source}</option>)}</select>;
+  const sel = (v, set) => <select className="field !w-auto" value={v} onChange={(e) => set(+e.target.value)}>{versions.map((x, i) => <option key={i} value={i}>{`v${x.n} · ${x.note || x.source}`}</option>)}</select>;
   return (
     <div data-testid="version-compare">
       <div className="grid md:grid-cols-2 gap-4">

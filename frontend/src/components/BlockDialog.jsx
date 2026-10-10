@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ArrowUpRight, Trash2 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
 import { AgentChip, Btn, Field, Tag } from "./kit";
 import { create, remove, update } from "../lib/api";
 import { AGENTS, AGENT_IDS, CATEGORIES } from "../lib/meta";
@@ -27,7 +27,7 @@ export default function BlockDialog({ block, open, onClose, onSaved }) {
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent data-testid="block-dialog" className="bg-linen text-chocolate border-2 border-chocolate rounded-none max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle className="font-display uppercase text-3xl">{f.id ? "Work block" : "New work block"}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle className="font-display uppercase text-3xl">{f.id ? "Work block" : "New work block"}</DialogTitle><DialogDescription className="sr-only">Edit details</DialogDescription></DialogHeader>
         {f.illustrative && <Tag tone="blue" className="w-fit">Illustrative — not a confirmed meeting</Tag>}
         {f.id && (
           <div className="border-2 border-chocolate p-4 bg-paper" data-testid="block-start-work">

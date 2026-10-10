@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Send, FileText, Trash2, Flag, Share2 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import { AgentChip, Btn, Empty, Field, Kicker, Note, PageHead, Tag } from "../components/kit";
 import { Markdown, Output } from "../components/Output";
 import MakeTask from "../components/MakeTask";
@@ -19,7 +19,7 @@ function PromptDialog({ agent, open, onClose }) {
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent data-testid="prompt-dialog" className="bg-linen text-chocolate border-2 border-chocolate rounded-none max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle className="font-display uppercase text-3xl">{AGENTS[agent].name} · prompt registry</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle className="font-display uppercase text-3xl">{AGENTS[agent].name} · prompt registry</DialogTitle><DialogDescription className="sr-only">Edit details</DialogDescription></DialogHeader>
         {!d ? <p className="font-mono text-xs">Loading…</p> : (
           <div className="space-y-6">
             <div><div className="flex gap-2 items-center mb-2"><Tag tone="dark">Original · read-only</Tag><span className="font-mono text-[10px]">{d.original.length.toLocaleString()} chars, verbatim from your supplied prompt</span></div>

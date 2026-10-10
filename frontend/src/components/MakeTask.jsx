@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ListPlus } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Btn, Field } from "./kit";
 import { create, list } from "../lib/api";
 import { AGENTS, AGENT_IDS } from "../lib/meta";
@@ -29,7 +29,7 @@ export default function MakeTask({ title, agent, why, nextAction, context, dark,
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="bg-linen text-chocolate border-2 border-chocolate rounded-none max-w-lg">
-          <DialogHeader><DialogTitle className="font-display uppercase text-2xl">Turn into a task</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="font-display uppercase text-2xl">Turn into a task</DialogTitle><DialogDescription className="sr-only">Edit details</DialogDescription></DialogHeader>
           <div className="space-y-3">
             <Field label="Task"><input data-testid="task-title-input" className="field" value={f.title || ""} onChange={s("title")} /></Field>
             <div className="grid grid-cols-2 gap-3">
@@ -39,7 +39,7 @@ export default function MakeTask({ title, agent, why, nextAction, context, dark,
             <Field label="Why it matters"><textarea className="field" rows={2} value={f.why || ""} onChange={s("why")} /></Field>
             <Field label="Next action"><input className="field" value={f.next_action || ""} onChange={s("next_action")} /></Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Link to calendar block"><select data-testid="task-block-select" className="field" value={f.block_id} onChange={s("block_id")}><option value="">None</option>{blocks.map((b) => <option key={b.id} value={b.id}>{b.date} · {b.title}</option>)}</select></Field>
+              <Field label="Link to calendar block"><select data-testid="task-block-select" className="field" value={f.block_id} onChange={s("block_id")}><option value="">None</option>{blocks.map((b) => <option key={b.id} value={b.id}>{`${b.date} · ${b.title}`}</option>)}</select></Field>
               <Field label="Link to project"><select className="field" value={f.project_id} onChange={s("project_id")}><option value="">None</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></Field>
             </div>
             <p className="font-mono text-[10px] text-chocolate/60">The source context (agent run, rationale, links) is saved with the task.</p>

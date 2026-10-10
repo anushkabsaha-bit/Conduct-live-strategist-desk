@@ -27,7 +27,7 @@ export function RunView({ agent, task, label, getInput, render, dark, hint, test
         <div className="flex items-center gap-2">
           {runs.length > 1 && (
             <select data-testid={`run-history-${tid}`} value={idx} onChange={(e) => setIdx(+e.target.value)} className={`${dark ? "field-dark" : "field"} !w-auto !py-1 !text-[11px]`}>
-              {runs.map((r, i) => <option key={r.id} value={i}>{i === 0 ? "Latest" : "Earlier"} · {fmtDate(r.created_at)}</option>)}
+              {runs.map((r, i) => <option key={r.id} value={i}>{`${i === 0 ? "Latest" : "Earlier"} · ${fmtDate(r.created_at)}`}</option>)}
             </select>
           )}
           <Btn data-testid={`run-btn-${tid}`} variant={dark ? "lineDark" : "dark"} onClick={go} loading={running}>

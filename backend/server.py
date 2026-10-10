@@ -40,6 +40,10 @@ def check(coll):
 
 @app.on_event("startup")
 async def startup():
+    for c in COLLS | {"runs", "messages", "prompt_revisions"}:
+        await db[c].create_index("id")
+    await db.runs.create_index([("ref_type", 1), ("ref_id", 1), ("task", 1)])
+    await db.messages.create_index([("agent", 1), ("created_at", 1)])
     if await db.meta.find_one({"k": "seeded"}):
         return
     monday = S.week_monday()
