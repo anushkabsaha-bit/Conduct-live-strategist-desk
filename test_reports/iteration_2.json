@@ -1,0 +1,38 @@
+{
+  "summary": "Iteration 2: full backend pytest suite re-run (25/25 pass, 142s), new frontend coverage for the 6 new rooms, Content Desk 4-stage workflow, Stories handoffs, Radar expansion, mobile shell, global search, workspace persistence/idempotency, and 2 real LLM runs (EDITH founder_messages ~33s and EDITH content_direction ~36s). Core flows work end-to-end. Minor spec deviations: missing data-testids load-generated-draft and save-adapted-draft in Content Desk tab C (equivalent UI exists under different IDs: berdine-use-version flow), duplicate main-nav data-testid between desktop sidebar and mobile drawer, handoff shows a toast ('Handed to Content Desk with its recorded context') rather than a persistent 'Context handed over' panel.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "ContentDesk Stage C (Write & Adapt)", "issue": "Spec requires data-testid 'load-generated-draft' and 'save-adapted-draft' in Stage C; neither is present in the DOM. The functionality exists via berdine-use-version tabs, but tests cannot target the required ids.", "selector": "[data-testid=\"load-generated-draft\"], [data-testid=\"save-adapted-draft\"]", "priority": "MEDIUM"},
+      {"component": "Shell main-nav", "issue": "The data-testid=\"main-nav\" is rendered twice (once in desktop <aside> and once in the mobile overlay) causing Playwright strict-mode violations and duplicate-id ambiguity.", "selector": "[data-testid=\"main-nav\"]", "priority": "LOW"},
+      {"component": "Workspace handoff", "issue": "Spec expects a persistent 'Context handed over' panel on the target room after handoff; current implementation only surfaces a transient toast ('Handed to Content Desk with its recorded context'). Context is persisted and visible in brief/source fields but no labelled panel is shown.", "selector": "n/a", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Daily Desk daily briefing / Content Desk LLM output", "issues": ["Em-dash (U+2014) appears in LLM-generated run output (e.g., 'booth\u2014test', 'documentation and reality.\u2014perfectly written...'). This is LLM text stored in Mongo, not static UI copy, so arguably outside the 'no em-dash in UI copy' rule, but worth noting; agent prompts may want to forbid em-dashes."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_backend.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Add data-testid=\"load-generated-draft\" to the button that loads BERDINE's generated draft into the editor in Content Desk Stage C.",
+    "Add data-testid=\"save-adapted-draft\" to the button that saves the Substack-adapted draft as a separate draft in Content Desk Stage C.",
+    "Give the mobile <nav> a distinct data-testid (e.g., 'mobile-nav') or render the shared nav only once at a time so [data-testid=\"main-nav\"] is unique.",
+    "Optional: render a persistent 'Context handed over' panel on the target workspace/draft after a cross-room handoff, in addition to the current toast.",
+    "Optional: instruct agents (system prompt) to avoid em-dashes so that generated output in Daily/Content/Narrative rooms conforms to the UI style rule."
+  ],
+  "critical_code_review_comments": [
+    "Shell.jsx reuses the same JSX node for desktop sidebar and mobile drawer, which forces data-testid duplication; extract the nav items into a reusable component that accepts a `variant` or testid prop.",
+    "Content Desk Stage C has heavy nested state; splitting adapt-channel flow into its own subcomponent would make it easier to attach the two missing testids and unit-test the 'load generated' path.",
+    "No MongoDB indexes on `id` (CRUD) or `room`/`stage` fields used in /api/c and /api/search; add compound indexes to keep queries fast as workspace/draft counts grow.",
+    "/api/search does a serial scan across 8 collections per keystroke; consider a text index + $or query or debounce + minimum query length server-side (currently client-only debounce 250ms).",
+    "Handoff creates a new draft/workspace via POST without a server-side 'source_room'/'source_id' linkage; without it the UI cannot render a persistent 'Context handed over' panel. Add a `handoff_from` field on the created doc."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (25/25)", "frontend": "~92% (all critical flows pass; 2 missing testids + 1 duplicate testid)"},
+  "test_credentials": "None (no auth).",
+  "seed_data_creation": "No new seed. Transient TEST data created and cleaned: 1 draft (bf7457f6...) from narrative handoff deleted; 1 draft (ecec1c46...) and 1 launch workspace (2d9a6916...) from Stories handoffs deleted; TEST_PERSIST_* value cleared from narrative ws-founder_themes. Status select reverted to 'draft'. Prior iteration-1 TEST_version in seeded draft left intact per the note.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend tests at /app/backend/tests/test_backend.py cover /api/c CRUD, /api/search, /api/agents, /api/run (incl. 2 LLM tasks), /api/.../chat. Each LLM run takes 30\u201340s. Content Desk stage tabs are A, B, C, D, F (no E; F = 'One idea, different formats'). Workspace routes: /narrative, /founder, /launch, /people, /media, /impact (all auto-create ONE worked example on first visit, idempotent on reload). Handoffs: ws-handoff-content creates /api/c/drafts; ws-handoff-founder creates workspaces(room=founder). Stories buttons story-to-content and story-to-launch work. Opportunity Radar expands via [data-testid^=\"opp-expand-\"]. Mobile menu via mobile-nav-open/-close. Server clock Oct 2026; 'Past' tags intended; live research not configured so CATHERINE labelled manual.",
+  "rca of the issue": "Missing testids (load-generated-draft, save-adapted-draft) \u2013 the ContentDesk Stages component implements the equivalent behaviour via berdine-use-version tabs plus save-version-btn, so the UI works but the spec-mandated hooks are absent. Duplicate main-nav \u2013 Shell.jsx stores the <nav> JSX in a const `nav` and renders it in both the desktop <aside> and the mobile drawer; both copies carry data-testid=\"main-nav\". Fix: give the mobile instance a different testid or wrap in a component that accepts a prop."
+}

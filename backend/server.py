@@ -251,6 +251,10 @@ async def run_task(body: dict = Body(...)):
         ids = extra.get("opportunity_ids") or []
         q = {"id": {"$in": ids}} if ids else {"status": {"$ne": "rejected"}}
         parts.append("=== OPPORTUNITIES TO RANK ===\n" + trim(await db.opportunities.find(q, NOPROJ).to_list(50), 8000))
+    if agent == "agatha":
+        res = await db.workspaces.find({"room": "impact", "data.results": {"$nin": [None, ""]}}, {"_id": 0, "name": 1, "data": 1}).to_list(30)
+        if res:
+            parts.append("=== RESULTS RECORDED BY ANUSHKA IN IMPACT & LEARNING (real entries, separate from the 38-post dataset) ===\n" + trim(res, 4000))
     if extra:
         parts.append("=== INPUT FROM ANUSHKA ===\n" + trim(extra, 3000))
     snapshot = {"version": item["versions"][-1]["n"]} if ref_type == "draft" and item else {}
@@ -262,13 +266,23 @@ async def run_task(body: dict = Body(...)):
     return run
 
 
+def no_dash(v):
+    if isinstance(v, str):
+        return v.replace(" \u2014 ", ", ").replace("\u2014", ", ")
+    if isinstance(v, list):
+        return [no_dash(x) for x in v]
+    if isinstance(v, dict):
+        return {k: no_dash(x) for k, x in v.items()}
+    return v
+
+
 async def execute_run(run_id, system, prompt):
     upd, raw = {}, ""
     try:
         for attempt in range(2):  # one automatic retry if the model returns malformed JSON
             raw = await A.llm_complete(system, prompt, f"run-{run_id}-{attempt}")
             try:
-                upd = {"output": A.parse_json(raw), "status": "ok", "attempts": attempt + 1}
+                upd = {"output": no_dash(A.parse_json(raw)), "status": "ok", "attempts": attempt + 1}
                 break
             except json.JSONDecodeError:
                 if attempt:
@@ -328,6 +342,7 @@ async def chat(agent_id: str, body: dict = Body(...)):
         out = ""
         try:
             async for chunk in A.llm_stream(system, prompt, f"chat-{agent_id}-{user_msg['id']}"):
+                chunk = no_dash(chunk)
                 out += chunk
                 await q.put({"delta": chunk})
             msg = {"id": str(uuid.uuid4()), "agent": agent_id, "role": "assistant", "text": out, "ref_type": ref_type, "ref_id": ref_id, "created_at": now()}

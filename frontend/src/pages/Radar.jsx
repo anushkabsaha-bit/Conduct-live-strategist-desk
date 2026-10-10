@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ExternalLink, Plus, ChevronDown, FolderPlus, Ban } from "lucide-react";
+import { ExternalLink, Plus, FolderPlus, Ban } from "lucide-react";
 import { Btn, Empty, Field, Kicker, Note, PageHead, Tag } from "../components/kit";
 import { Claim } from "../components/Output";
 import AgentRunCard from "../components/AgentRunCard";
@@ -38,8 +38,8 @@ function OppForm({ onSaved }) {
   );
 }
 
-function OppRow({ o, reload, cmp, toggleCmp }) {
-  const [open, setOpen] = useState(false);
+function OppRow({ o, reload, cmp, toggleCmp, selected, onSelect, detail }) {
+  const open = !!detail;
   const past = o.end_date && o.end_date < todayISO();
   const set = async (patch) => { await update("opportunities", o.id, patch); reload(); };
   const reject = async () => { await set({ status: "rejected" }); await recordDecision({ ref_type: "opportunity", ref_id: o.id, choice: "rejected", note: `Rejected ${o.name}` }); };
@@ -55,8 +55,8 @@ function OppRow({ o, reload, cmp, toggleCmp }) {
   };
   return (
     <div data-testid={`opp-row-${o.id}`} className={`border-b border-chocolate/25 ${o.status === "rejected" ? "opacity-45" : ""}`}>
-      <div className="grid md:grid-cols-[28px_1.6fr_1fr_1fr_1fr_130px_28px] gap-3 items-center py-3">
-        <input type="checkbox" data-testid={`opp-compare-${o.id}`} checked={cmp} onChange={toggleCmp} className="accent-tangelo w-4 h-4" />
+      {!detail && <div onClick={onSelect} className={`grid md:grid-cols-[28px_1.6fr_1fr_1fr_1fr_120px] gap-3 items-center py-3 px-2 cursor-pointer transition-colors ${selected ? "bg-botticelli/30" : "hover:bg-paper"}`}>
+        <input type="checkbox" data-testid={`opp-compare-${o.id}`} checked={cmp} onClick={(e) => e.stopPropagation()} onChange={toggleCmp} className="accent-tangelo w-4 h-4" />
         <div>
           <p className="font-mono text-sm font-bold">{o.name}</p>
           <div className="flex flex-wrap gap-1.5 mt-1"><span className={`font-mono text-[9px] tracking-[0.12em] uppercase px-1.5 py-0.5 ${VERIF[o.verification]?.cls}`}>{VERIF[o.verification]?.label}</span>{past && <Tag tone="solid">Past</Tag>}<Tag>{o.type.replace(/_/g, " ")}</Tag></div>
@@ -64,12 +64,13 @@ function OppRow({ o, reload, cmp, toggleCmp }) {
         <p className="font-mono text-xs">{o.market}<br /><span className="text-chocolate/60">{o.location}</span></p>
         <p className="font-mono text-xs">{o.start_date ? `${o.start_date}${o.end_date && o.end_date !== o.start_date ? ` → ${o.end_date}` : ""}` : <span className="text-tangelo">Date unconfirmed</span>}<br /><span className="text-chocolate/60">Deadline: {o.deadline || "Unknown"}</span></p>
         <div>{o.source_url ? <a href={o.source_url} target="_blank" rel="noreferrer" data-testid={`opp-source-${o.id}`} className="inline-flex items-center gap-1 font-mono text-[11px] text-tangelo underline-grow">Official source <ExternalLink className="w-3 h-3" /></a> : <span className="font-mono text-[11px] text-chocolate/50">No source yet</span>}<p className="font-mono text-[9px] text-chocolate/50 mt-0.5">{o.source_checked && `Checked ${o.source_checked}`}</p></div>
-        <select data-testid={`opp-status-${o.id}`} className="field !py-1 !text-[11px]" value={o.status} onChange={(e) => set({ status: e.target.value })}>{OPP_STATUS.map((x) => <option key={x}>{x}</option>)}</select>
-        <button data-testid={`opp-expand-${o.id}`} onClick={() => setOpen(!open)}><ChevronDown className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`} /></button>
-      </div>
+        <select data-testid={`opp-status-${o.id}`} onClick={(e) => e.stopPropagation()} className="field !py-1 !text-[11px]" value={o.status} onChange={(e) => set({ status: e.target.value })}>{OPP_STATUS.map((x) => <option key={x}>{x}</option>)}</select>
+      </div>}
       {open && (
-        <div className="pb-8 pl-0 md:pl-10 space-y-5">
-          <div className="grid md:grid-cols-3 gap-4 font-mono text-xs">
+        <div className="pb-8 space-y-5" data-testid={`opp-detail-${o.id}`}>
+          <p className="font-display uppercase text-3xl leading-none">{o.name}</p>
+          <div className="flex flex-wrap gap-2 items-center"><span className={`font-mono text-[9px] tracking-[0.12em] uppercase px-1.5 py-0.5 ${VERIF[o.verification]?.cls}`}>{VERIF[o.verification]?.label}</span>{past && <Tag tone="solid">Past</Tag>}<span className="font-mono text-xs">{o.start_date || "Date unconfirmed"} · {o.location}</span>{o.source_url && <a href={o.source_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-mono text-[11px] text-tangelo underline-grow">Official source <ExternalLink className="w-3 h-3" /></a>}</div>
+          <div className="grid md:grid-cols-2 gap-4 font-mono text-xs">
             <p><span className="kicker text-tangelo block">Audience</span>{o.audience}</p>
             <p><span className="kicker text-tangelo block">Why relevant</span><Claim text={o.relevance} /></p>
             <p><span className="kicker text-tangelo block">Cost</span>{o.cost}</p>
@@ -97,6 +98,7 @@ export default function Radar() {
   const [q, setQ] = useState({ text: "", market: "", type: "", status: "", from: "", to: "" });
   const [cmp, setCmp] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [selId, setSelId] = useState(null);
   const [plan, setPlan] = useState({ query: "Could Conduct be represented at a relevant developer event in Germany next year?", markets: "Germany / Europe", types: "developer conferences, hackathons, communities", date_range: "next 12–18 months" });
   const load = useCallback(() => list("opportunities").then(setItems), []);
   useEffect(() => { load(); }, [load]);
@@ -150,7 +152,12 @@ export default function Radar() {
             )} />
         </div>
 
-        <div>
+        <div className="grid xl:grid-cols-[180px_minmax(0,1fr)_420px] gap-6 items-start" data-testid="radar-workspace">
+          <aside className="space-y-5 xl:sticky xl:top-20" data-testid="radar-lists">
+            <div><p className="kicker text-tangelo mb-2">Saved lists</p>{[["", "All"], ["saved", "Saved"], ["shortlisted", "Shortlisted"], ["watch", "Watching"], ["converted", "Projects"], ["rejected", "Rejected"]].map(([k, l]) => <button key={l} data-testid={`list-${l.toLowerCase()}`} onClick={() => { setQ({ ...q, status: k }); setTab("all"); }} className={`block w-full text-left font-mono text-xs py-1.5 px-2 ${q.status === k ? "bg-chocolate text-linen" : "hover:bg-paper"}`}>{l} <span className="opacity-60">({k ? items.filter((o) => o.status === k).length : items.length})</span></button>)}</div>
+            <div><p className="kicker text-tangelo mb-2">Categories</p>{TYPES.filter((t) => items.some((o) => o.type === t)).map((t) => <button key={t} onClick={() => setQ({ ...q, type: q.type === t ? "" : t })} className={`block w-full text-left font-mono text-[11px] py-1 px-2 ${q.type === t ? "bg-tangelo text-linen" : "hover:bg-paper"}`}>{t.replace(/_/g, " ")}</button>)}</div>
+          </aside>
+          <div className="min-w-0">
           <Kicker n="B">Opportunities</Kicker>
           <div className="grid md:grid-cols-6 gap-3 mb-4" data-testid="opp-filters">
             <div className="md:col-span-2"><input data-testid="opp-search" className="field" placeholder="Search…" value={q.text} onChange={sq("text")} /></div>
@@ -169,8 +176,12 @@ export default function Radar() {
           {showForm && <div className="mb-6"><OppForm onSaved={() => { load(); setShowForm(false); }} /></div>}
           {!filtered.length ? <Empty title="Nothing matches.">Adjust filters or add an opportunity with its official source.</Empty> :
             tab === "verified" ? Object.entries(byMonth).map(([m, xs]) => (
-              <div key={m} className="mb-6"><p className="font-display uppercase text-3xl text-tangelo mb-1">{m}</p><div className="border-t-2 border-chocolate">{xs.map((o) => <OppRow key={o.id} o={o} reload={load} cmp={cmp.includes(o.id)} toggleCmp={() => setCmp(cmp.includes(o.id) ? cmp.filter((x) => x !== o.id) : [...cmp, o.id])} />)}</div></div>
-            )) : <div className="border-t-2 border-chocolate">{filtered.map((o) => <OppRow key={o.id} o={o} reload={load} cmp={cmp.includes(o.id)} toggleCmp={() => setCmp(cmp.includes(o.id) ? cmp.filter((x) => x !== o.id) : [...cmp, o.id])} />)}</div>}
+              <div key={m} className="mb-6"><p className="font-display uppercase text-3xl text-tangelo mb-1">{m}</p><div className="border-t-2 border-chocolate">{xs.map((o) => <OppRow key={o.id} o={o} reload={load} cmp={cmp.includes(o.id)} toggleCmp={() => setCmp(cmp.includes(o.id) ? cmp.filter((x) => x !== o.id) : [...cmp, o.id])} selected={selId === o.id} onSelect={() => setSelId(o.id)} />)}</div></div>
+            )) : <div className="border-t-2 border-chocolate">{filtered.map((o) => <OppRow key={o.id} o={o} reload={load} cmp={cmp.includes(o.id)} toggleCmp={() => setCmp(cmp.includes(o.id) ? cmp.filter((x) => x !== o.id) : [...cmp, o.id])} selected={selId === o.id} onSelect={() => setSelId(o.id)} />)}</div>}
+        </div>
+          <aside className="xl:sticky xl:top-20 border-2 border-chocolate bg-paper p-5 max-h-[85vh] overflow-y-auto scroll-thin" data-testid="radar-detail">
+            {items.find((o) => o.id === selId) ? <OppRow detail o={items.find((o) => o.id === selId)} reload={load} /> : <Empty title="Select an opportunity.">Details, CATHERINE's assessment, DIANA's campaign idea and next steps open here.</Empty>}
+          </aside>
         </div>
 
         {compared.length > 1 && (

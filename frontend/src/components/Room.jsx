@@ -99,7 +99,7 @@ export default function Room({ cfg }) {
                 </div>
               </div>
               {w.label && <Tag tone="blue">{w.label}</Tag>}
-              {w.context && <details className="border border-chocolate/30 bg-paper p-3"><summary className="kicker text-tangelo cursor-pointer">Context handed over from another room</summary><pre className="whitespace-pre-wrap font-mono text-[11px] mt-2">{w.context}</pre></details>}
+              {w.context && <details data-testid="ws-context-panel" open className="border border-chocolate/30 bg-paper p-3"><summary className="kicker text-tangelo cursor-pointer">Context handed over from another room</summary><pre className="whitespace-pre-wrap font-mono text-[11px] mt-2">{w.context}</pre></details>}
               <Fields w={w} cfg={cfg} save={save} />
               <Kicker>Workflow · {cfg.steps.map((s) => s.agent.toUpperCase()).join(" → ")}</Kicker>
               <div className="space-y-6">

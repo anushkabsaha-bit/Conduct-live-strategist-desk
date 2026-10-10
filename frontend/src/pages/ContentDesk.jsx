@@ -247,6 +247,7 @@ export default function ContentDesk() {
           {!draft ? <Empty title="No draft selected.">Create a new draft to begin.</Empty> : (
             <div className="space-y-8 min-w-0">
               {draft.provenance && <Tag tone="blue">{draft.provenance}</Tag>}
+              {draft.versions[0]?.source === "handoff" && draft.brief?.source_material && <details data-testid="handoff-context-panel" className="border border-chocolate/30 bg-paper p-3" open><summary className="kicker text-tangelo cursor-pointer">Context handed over: {draft.versions[0].note}</summary><pre className="whitespace-pre-wrap font-mono text-[11px] mt-2 max-h-64 overflow-auto">{draft.brief.source_material}</pre></details>}
               <div className="grid md:grid-cols-6 gap-3">
                 <div className="md:col-span-2"><Field label="Title"><input data-testid="draft-title-input" className="field" defaultValue={draft.title} key={`t${id}`} onBlur={(e) => meta("title", e.target.value)} /></Field></div>
                 <Field label="Format"><select data-testid="draft-format-select" className="field" value={draft.format} onChange={(e) => meta("format", e.target.value)}>{FORMATS.map((f) => <option key={f}>{f}</option>)}</select></Field>

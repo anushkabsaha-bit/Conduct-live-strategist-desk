@@ -47,10 +47,10 @@ export default function Shell() {
   const loc = useLocation();
   useEffect(() => { setOpen(false); list("tasks").then((t) => setOpenTasks(t.filter((x) => x.status !== "done").length)).catch(() => {}); }, [loc.pathname]);
   const current = ROOMS.find((r) => (r.to === "/" ? loc.pathname === "/" : loc.pathname.startsWith(r.to)));
-  const nav = (
-    <nav className="flex flex-col gap-0.5 py-3" data-testid="main-nav">
+  const nav = (mobile) => (
+    <nav className="flex flex-col gap-0.5 py-3" data-testid={mobile ? "mobile-nav" : "main-nav"}>
       {ROOMS.map((r) => (
-        <NavLink key={r.to} to={r.to} end={r.to === "/"} title={r.label} data-testid={`nav-${r.label.toLowerCase().replace(/[^a-z]+/g, "-")}`}
+        <NavLink key={r.to} to={r.to} end={r.to === "/"} title={r.label} data-testid={`${mobile ? "m-" : ""}nav-${r.label.toLowerCase().replace(/[^a-z]+/g, "-")}`}
           className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 border-l-[3px] transition-colors ${isActive ? "border-tangelo bg-linen/10 text-linen" : "border-transparent text-linen/55 hover:text-linen hover:bg-linen/5"}`}>
           <r.icon className="w-4 h-4 shrink-0" />{(wide || open) && <span className="font-mono text-[10px] tracking-[0.14em] uppercase truncate">{r.label}</span>}
         </NavLink>
@@ -62,10 +62,10 @@ export default function Shell() {
       <div className="grain" aria-hidden="true" />
       <aside className={`hidden lg:flex flex-col shrink-0 sticky top-0 h-screen border-r border-linen/15 bg-ink transition-[width] duration-300 ${wide ? "w-60" : "w-14"}`}>
         <button onClick={() => setWide(!wide)} data-testid="sidebar-toggle" className="h-14 px-4 flex items-center gap-2 border-b border-linen/15 font-display uppercase text-xl">{wide ? <>conduct<span className="text-tangelo">/</span></> : <Menu className="w-4 h-4" />}</button>
-        <div className="flex-1 overflow-y-auto scroll-thin">{nav}</div>
+        <div className="flex-1 overflow-y-auto scroll-thin">{nav(false)}</div>
         {wide && <p className="p-4 font-mono text-[9px] tracking-[0.14em] uppercase text-linen/40">Illustrative desk by Anushka Saha. Agents surface things; Anushka decides what ships.</p>}
       </aside>
-      {open && <div className="lg:hidden fixed inset-0 z-[60] bg-ink/95 overflow-y-auto"><button className="p-4" onClick={() => setOpen(false)} data-testid="mobile-nav-close"><X className="w-5 h-5" /></button>{nav}</div>}
+      {open && <div className="lg:hidden fixed inset-0 z-[60] bg-ink/95 overflow-y-auto"><button className="p-4" onClick={() => setOpen(false)} data-testid="mobile-nav-close"><X className="w-5 h-5" /></button>{nav(true)}</div>}
       <div className="flex-1 min-w-0">
         <header className="sticky top-0 z-50 bg-ink/95 backdrop-blur-md border-b border-linen/15 h-14 px-4 md:px-8 flex items-center gap-4">
           <button className="lg:hidden" onClick={() => setOpen(true)} data-testid="mobile-nav-open"><Menu className="w-5 h-5" /></button>
