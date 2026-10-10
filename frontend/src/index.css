@@ -1,0 +1,39 @@
+@import url("https://fonts.googleapis.com/css2?family=Anton&family=Caveat:wght@500;600&family=Instrument+Serif:ital@0;1&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --linen: #f9e8d4; --chocolate: #663924; --tangelo: #d54c15; --botticelli: #8db6c7; --ink: #16100b;
+    --background: 32 73% 90%; --foreground: 23 48% 27%;
+    --card: 32 73% 90%; --card-foreground: 23 48% 27%;
+    --popover: 32 73% 90%; --popover-foreground: 23 48% 27%;
+    --primary: 18 81% 46%; --primary-foreground: 32 73% 90%;
+    --secondary: 199 35% 67%; --secondary-foreground: 23 48% 27%;
+    --muted: 32 40% 84%; --muted-foreground: 23 30% 40%;
+    --accent: 18 81% 46%; --accent-foreground: 32 73% 90%;
+    --destructive: 0 84.2% 60.2%; --destructive-foreground: 0 0% 98%;
+    --border: 23 48% 27%; --input: 23 48% 27%; --ring: 18 81% 46%;
+    --radius: 0rem;
+  }
+  * { border-color: rgba(102, 57, 36, .3); }
+  body { @apply bg-ink text-linen font-mono antialiased; }
+  ::selection { background: var(--tangelo); color: var(--linen); }
+}
+
+.grain { background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23a)'/%3E%3C/svg%3E"); background-size: 180px 180px; inset: 0; opacity: .05; pointer-events: none; position: fixed; z-index: 90; }
+.outline-text { -webkit-text-stroke: 2px var(--chocolate); color: transparent; }
+.outline-text-linen { -webkit-text-stroke: 1.5px var(--linen); color: transparent; }
+.spotlight { box-shadow: 0 30px 80px -20px #66392473, 0 12px 28px -12px #66392459; }
+.underline-grow { background-image: linear-gradient(var(--tangelo), var(--tangelo)); background-position: left calc(100% - 2px); background-repeat: no-repeat; background-size: 0 2px; transition: background-size .35s ease; }
+.underline-grow:hover, .underline-grow.active { background-size: 100% 2px; }
+.marquee-track { animation: marquee-x 55s linear infinite; }
+.tape { position: relative; }
+.tape:before { background: #8db6c7a6; content: ""; height: 18px; position: absolute; top: -9px; left: 50%; width: 70px; transform: translateX(-50%) rotate(-3deg); }
+.field { @apply w-full bg-paper border border-chocolate/40 text-chocolate font-mono text-sm px-3 py-2 outline-none transition-colors focus:border-tangelo; }
+.field-dark { @apply w-full bg-ink/40 border border-linen/30 text-linen font-mono text-sm px-3 py-2 outline-none transition-colors focus:border-tangelo placeholder:text-linen/40; }
+.kicker { @apply font-mono text-[10px] tracking-[0.2em] uppercase; }
+.scroll-thin::-webkit-scrollbar { height: 6px; width: 6px; }
+.scroll-thin::-webkit-scrollbar-thumb { background: rgba(102,57,36,.35); }
+.prose-desk p { margin-bottom: .6rem; }
