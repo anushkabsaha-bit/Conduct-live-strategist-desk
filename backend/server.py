@@ -24,8 +24,8 @@ app = FastAPI(title="Conduct Communications Strategist Desk")
 api = APIRouter(prefix="/api")
 log = logging.getLogger("desk")
 
-COLLS = {"calendar", "tasks", "drafts", "stories", "campaigns", "opportunities", "sources", "decisions", "projects", "handoffs"}
-REF_COLL = {"draft": "drafts", "story": "stories", "campaign": "campaigns", "opportunity": "opportunities", "project": "projects", "block": "calendar", "task": "tasks"}
+COLLS = {"calendar", "tasks", "drafts", "stories", "campaigns", "opportunities", "sources", "decisions", "projects", "handoffs", "workspaces"}
+REF_COLL = {"draft": "drafts", "story": "stories", "campaign": "campaigns", "opportunity": "opportunities", "project": "projects", "block": "calendar", "task": "tasks", "workspace": "workspaces"}
 NOPROJ = {"_id": 0}
 
 
@@ -120,6 +120,16 @@ async def add_version(draft_id: str, body: dict = Body(...)):
          "accepted": body.get("accepted", []), "rejected": body.get("rejected", []), "created_at": now()}
     await db.drafts.update_one({"id": draft_id}, {"$push": {"versions": v}, "$set": {"updated_at": now()}})
     return v
+
+
+@api.get("/search")
+async def search(q: str):
+    rx = {"$regex": q, "$options": "i"}
+    out = []
+    for coll, f in [("tasks", "title"), ("drafts", "title"), ("stories", "title"), ("campaigns", "name"), ("opportunities", "name"), ("workspaces", "name"), ("projects", "name"), ("calendar", "title")]:
+        for d in await db[coll].find({f: rx}, {"_id": 0, "id": 1, f: 1, "room": 1}).to_list(8):
+            out.append({"coll": coll, "id": d["id"], "label": d[f], "room": d.get("room")})
+    return out
 
 
 # ---------- dataset & agents ----------
@@ -235,7 +245,7 @@ async def run_task(body: dict = Body(...)):
     ref_type, ref_id, extra = body.get("ref_type"), body.get("ref_id"), body.get("input") or {}
     ctx, item = await shared_context(ref_type, ref_id)
     parts = [ctx] if ctx else []
-    if task.startswith("ana.") or task in ("catherine.campaign_events",):
+    if task.startswith("ana.") or task in ("catherine.campaign_events", "catherine.launch_opportunities"):
         parts.append(await desk_state())
     if task == "ana.prioritise_opportunities":
         ids = extra.get("opportunity_ids") or []
@@ -255,8 +265,14 @@ async def run_task(body: dict = Body(...)):
 async def execute_run(run_id, system, prompt):
     upd, raw = {}, ""
     try:
-        raw = await A.llm_complete(system, prompt, f"run-{run_id}")
-        upd = {"output": A.parse_json(raw), "status": "ok"}
+        for attempt in range(2):  # one automatic retry if the model returns malformed JSON
+            raw = await A.llm_complete(system, prompt, f"run-{run_id}-{attempt}")
+            try:
+                upd = {"output": A.parse_json(raw), "status": "ok", "attempts": attempt + 1}
+                break
+            except json.JSONDecodeError:
+                if attempt:
+                    raise
     except json.JSONDecodeError:
         upd = {"status": "error", "error": "The agent returned output that could not be parsed. Please retry.", "raw": raw[:6000]}
     except Exception as e:  # LLM/network failure surfaced honestly

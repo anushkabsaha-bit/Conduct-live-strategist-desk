@@ -17,9 +17,13 @@ export function blocksOn(blocks, dateISO) {
 export default function WeekCalendar({ blocks, reload }) {
   const [monday, setMonday] = useState(() => mondayOf(new Date()));
   const [sel, setSel] = useState(null);
-  const days = useMemo(() => [0, 1, 2, 3, 4].map((i) => { const d = new Date(monday); d.setDate(d.getDate() + i); return d; }), [monday]);
+  const [view, setView] = useState("week");
+  const [day, setDay] = useState(() => { const d = new Date(); const wd = (d.getDay() + 6) % 7; return wd > 4 ? 0 : wd; });
+  const week = useMemo(() => [0, 1, 2, 3, 4].map((i) => { const d = new Date(monday); d.setDate(d.getDate() + i); return d; }), [monday]);
+  const days = view === "week" ? week : [week[day]];
   const today = iso(new Date());
-  const shift = (n) => { const d = new Date(monday); d.setDate(d.getDate() + n * 7); setMonday(d); };
+  const shiftWeek = (n) => { const d = new Date(monday); d.setDate(d.getDate() + n * 7); setMonday(d); };
+  const shift = (n) => { if (view === "week") return shiftWeek(n); const nd = day + n; if (nd < 0) { setDay(4); shiftWeek(-1); } else if (nd > 4) { setDay(0); shiftWeek(1); } else setDay(nd); };
   return (
     <div data-testid="week-calendar">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
@@ -27,12 +31,13 @@ export default function WeekCalendar({ blocks, reload }) {
           <Btn variant="line" data-testid="cal-prev-week" onClick={() => shift(-1)}><ChevronLeft className="w-3.5 h-3.5" /></Btn>
           <Btn variant="line" data-testid="cal-this-week" onClick={() => setMonday(mondayOf(new Date()))}>This week</Btn>
           <Btn variant="line" data-testid="cal-next-week" onClick={() => shift(1)}><ChevronRight className="w-3.5 h-3.5" /></Btn>
-          <span className="font-mono text-xs ml-2">w/c {days[0].toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</span>
+          <span className="flex ml-2">{["day", "week"].map((v) => <button key={v} data-testid={`cal-view-${v}`} onClick={() => setView(v)} className={`font-mono text-[10px] uppercase tracking-[0.14em] px-3 py-2 border border-chocolate/50 ${view === v ? "bg-chocolate text-linen" : ""}`}>{v}</button>)}</span>
+          <span className="font-mono text-xs ml-2">{view === "day" ? "" : "w/c "}{days[0].toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</span>
         </div>
         <Btn variant="accent" data-testid="cal-add-block" onClick={() => setSel({ date: iso(days[0]) })}><Plus className="w-3.5 h-3.5" />Add block</Btn>
       </div>
       <div className="overflow-x-auto scroll-thin border-2 border-chocolate bg-paper">
-        <div className="min-w-[880px] grid grid-cols-[52px_repeat(5,1fr)]">
+        <div className={`grid ${view === "week" ? "min-w-[880px] grid-cols-[52px_repeat(5,1fr)]" : "grid-cols-[52px_1fr]"}`}>
           <div className="border-b-2 border-chocolate bg-chocolate" />
           {days.map((d) => (
             <div key={iso(d)} className={`border-b-2 border-l border-chocolate px-3 py-2 ${iso(d) === today ? "bg-tangelo text-linen" : "bg-chocolate text-linen"}`}>

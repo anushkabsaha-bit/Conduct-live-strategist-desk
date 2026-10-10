@@ -43,7 +43,7 @@ export const Btn = ({ children, variant = "dark", className = "", loading, ...p 
 
 export const AgentChip = ({ id, className = "" }) => {
   const a = AGENTS[id];
-  if (!a) return <Tag>{id || "—"}</Tag>;
+  if (!a) return <Tag>{id || ", "}</Tag>;
   return <span className={`inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.16em] uppercase px-2 py-0.5 text-linen ${className}`} style={{ background: a.color }}>{a.name}</span>;
 };
 

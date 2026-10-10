@@ -115,13 +115,13 @@ function PublicSources({ sources, reload }) {
         <Field label="URL"><input data-testid="source-url-input" className="field" value={f.url} onChange={(e) => setF({ ...f, url: e.target.value })} /></Field>
         <Field label="What it supports"><input className="field" value={f.detail} onChange={(e) => setF({ ...f, detail: e.target.value })} /></Field>
         <div className="flex items-end"><Btn variant="accent" data-testid="source-add-btn" onClick={() => add().then(() => {})} disabled={!f.title}>Add reference</Btn></div>
-        <p className="md:col-span-4 font-mono text-[10px] text-chocolate/60">File upload/ingestion is not configured in this deployment — references are stored as links, not ingested content.</p>
+        <p className="md:col-span-4 font-mono text-[10px] text-chocolate/60">File upload/ingestion is not configured in this deployment, references are stored as links, not ingested content.</p>
       </div>
       <div>
         <Kicker>Research records (opportunity sources)</Kicker>
         {opps.map((o) => (
           <div key={o.id} className="flex flex-wrap justify-between gap-3 py-2 border-b border-chocolate/20 font-mono text-xs">
-            <span>{o.name} <span className="text-chocolate/60">· {o.verification.replace("_", " ")} · checked {o.source_checked || "—"}</span></span>
+            <span>{o.name} <span className="text-chocolate/60">· {o.verification.replace("_", " ")} · checked {o.source_checked || ", "}</span></span>
             {o.source_url ? <a href={o.source_url} target="_blank" rel="noreferrer" className="text-tangelo underline-grow">{o.source_url}</a> : <span className="text-chocolate/50">no source</span>}
           </div>
         ))}
@@ -137,7 +137,7 @@ function Work() {
   const del = async (c, id) => { if (window.confirm("Delete this item?")) { await remove(c, id); load(); } };
   return (
     <div className="grid md:grid-cols-3 gap-8">
-      {[["drafts", "Drafts", (x) => `${x.title} · v${x.versions.length} · ${x.status}`], ["projects", "Projects", (x) => `${x.name} · ${x.status}`], ["decisions", "Decisions log", (x) => `${x.choice} — ${x.note || ""} · ${fmtDate(x.created_at)}`]].map(([c, t, fn]) => (
+      {[["drafts", "Drafts", (x) => `${x.title} · v${x.versions.length} · ${x.status}`], ["projects", "Projects", (x) => `${x.name} · ${x.status}`], ["decisions", "Decisions log", (x) => `${x.choice}, ${x.note || ""} · ${fmtDate(x.created_at)}`]].map(([c, t, fn]) => (
         <div key={c} data-testid={`work-${c}`}>
           <p className="font-display uppercase text-2xl mb-3">{t}</p>
           {d[c].length ? d[c].map((x) => (

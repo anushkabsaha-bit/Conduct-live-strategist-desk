@@ -7,6 +7,8 @@ import AgentRunCard from "../components/AgentRunCard";
 import MakeTask from "../components/MakeTask";
 import { create, list, recordDecision, remove, update } from "../lib/api";
 import { STAGES } from "../lib/meta";
+import { useNavigate } from "react-router-dom";
+import { listRuns } from "../lib/api";
 
 const FACT = { verified: "green", dataset: "blue", stated_unsourced: "line", unverified: "solid" };
 
@@ -27,6 +29,25 @@ function ListEditor({ items, onChange, placeholder, testid }) {
   );
 }
 
+function HandOff({ s }) {
+  const nav = useNavigate();
+  const go = async (target) => {
+    const runs = await listRuns({ ref_type: "story", ref_id: s.id });
+    const ctx = runs.slice(0, 4).map((r) => `${r.agent.toUpperCase()} ${r.task}: ${JSON.stringify(r.output).slice(0, 700)}`).join("\n");
+    const facts = (s.known_facts || []).map((f) => `[${f.status}] ${f.fact}`).join("\n");
+    await create("handoffs", { from_room: "stories", to_room: target, ref_id: s.id, excerpt: ctx.slice(0, 2500) });
+    if (target === "content") {
+      const d = await create("drafts", { title: `Story: ${s.title}`, format: "LinkedIn post", audience: s.audience, objective: "", word_limit: null, status: "draft", brief: { subject: s.title, coverage: "First time covering this", source_material: `${s.what_happened}\n\nFacts:\n${facts}\n\nRecorded agent work:\n${ctx}`, source_url: s.source_url || "" }, versions: [{ n: 1, text: "", note: "Handed over from Stories", source: "handoff", created_at: new Date().toISOString() }] });
+      nav(`/content?draft=${d.id}`);
+    } else {
+      const w = await create("workspaces", { room: "launch", name: `Launch from story: ${s.title}`, status: "Planning", label: "HYPOTHETICAL launch built from a story brief. Statuses are set by you.", links: [{ room: "stories", id: s.id }], context: ctx.slice(0, 4000), data: { facts, audience: s.audience, channels: (s.formats || []).join("\n") } });
+      nav(`/launch?id=${w.id}`);
+    }
+    toast.success("Handed over with facts and recorded agent work");
+  };
+  return <div className="bg-chocolate text-linen p-5 flex flex-wrap gap-2" data-testid="story-handoff"><Btn variant="lineDark" data-testid="story-to-content" onClick={() => go("content")}>Hand to Content Desk</Btn><Btn variant="lineDark" data-testid="story-to-launch" onClick={() => go("launch")}>Turn into a launch plan</Btn></div>;
+}
+
 function StoryDetail({ s, save, del }) {
   const [factText, setFactText] = useState("");
   const [factStatus, setFactStatus] = useState("unverified");
@@ -41,7 +62,7 @@ function StoryDetail({ s, save, del }) {
       </div>
       <div className="grid md:grid-cols-2 gap-8">
         <div>
-          <p className="kicker text-tangelo mb-2">What we know — and how we know it</p>
+          <p className="kicker text-tangelo mb-2">What we know, and how we know it</p>
           {(s.known_facts || []).map((f, i) => (
             <div key={i} className="flex items-start gap-2 py-2 border-b border-chocolate/15">
               <Tag tone={FACT[f.status] || "line"} className="shrink-0">{f.status.replace("_", " ")}</Tag>
@@ -83,6 +104,8 @@ function StoryDetail({ s, save, del }) {
         <AgentRunCard agent="ana" task="ana.next_steps" refType="story" refId={s.id} label="Next steps & dependencies"
           render={(o, r) => (<div><Output data={o} /><div className="mt-4 flex flex-wrap gap-4">{(o.next_steps || []).map((n, i) => <MakeTask key={i} testid={`story-step-task-${i}`} label={`Task: ${n.step.slice(0, 40)}…`} title={n.step} agent="edith" why={`Story: ${s.title}`} nextAction={n.step} context={{ source: "ana.next_steps", run_id: r.id, story_id: s.id, step: n }} />)}</div></div>)} />
       </div>
+      {s.source_url && <a href={s.source_url} target="_blank" rel="noreferrer" data-testid="story-source-link" className="font-mono text-xs text-tangelo underline-grow">Public source</a>}
+      <HandOff s={s} />
       <Btn variant="ghost" data-testid="story-delete-btn" onClick={del}><Trash2 className="w-3.5 h-3.5" />Delete story</Btn>
     </div>
   );

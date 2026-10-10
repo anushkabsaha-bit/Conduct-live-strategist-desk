@@ -39,6 +39,7 @@ Truth rules (mandatory):
 - Never claim another agent has completed work unless that work appears in SHARED CONTEXT. Otherwise describe it as a proposed next action.
 - Never promise virality or guaranteed engagement. Targets in the original prompts are targets, not forecasts.
 - Label claims where it matters using: [VERIFIED] public/verifiable fact, [DATASET] finding from the supplied 38-post data, [EXTERNAL] external info supplied by the user, [HYPOTHESIS], [ILLUSTRATIVE], [NEEDS APPROVAL].
+- Never use em dashes in any output.
 - Address the user as Anushka. Be concise, specific and editorial. British English unless asked otherwise.
 - Anushka makes the final decision. Nothing is published, booked or approved by you."""
 
@@ -77,7 +78,7 @@ def build_system(agent_id, revision=None):
 
 
 async def llm_stream(system, text, session_id):
-    chat = LlmChat(api_key=os.environ["EMERGENT_LLM_KEY"], session_id=session_id, system_message=system).with_model(*MODEL)
+    chat = LlmChat(api_key=os.environ["EMERGENT_LLM_KEY"], session_id=session_id, system_message=system).with_model(*MODEL).with_params(max_tokens=8000)
     async for ev in chat.stream_message(UserMessage(text=text)):
         if isinstance(ev, TextDelta):
             yield ev.content
@@ -133,6 +134,10 @@ TASKS = {
     "diana.opportunity_concept": ("diana", "Develop a possible creative participation concept for the OPPORTUNITY. Clarify first; keep claims safe; note costs as unknown unless supplied.",
                                   {"objective": "", "audience": "", "concept": "", "hook": "", "format": "", "what_we_need": [""], "cost_uncertainties": [""], "approvals": [""], "small_test": "", "kill_if": [""]}),
 }
+
+
+from tasks_extra import EXTRA_TASKS  # noqa: E402
+TASKS.update(EXTRA_TASKS)
 
 
 def task_prompt(task_id, payload):

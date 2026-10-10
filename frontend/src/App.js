@@ -11,6 +11,7 @@ import Campaigns from "./pages/Campaigns";
 import Radar from "./pages/Radar";
 import AgentRoom from "./pages/AgentRoom";
 import Library from "./pages/Library";
+import { NarrativeRoom, FounderRoom, LaunchRoom, PeopleRoom, MediaRoom, ImpactRoom } from "./pages/Rooms";
 
 export default function App() {
   return (
@@ -25,6 +26,12 @@ export default function App() {
             <Route path="/radar" element={<Radar />} />
             <Route path="/agents" element={<AgentRoom />} />
             <Route path="/library" element={<Library />} />
+            <Route path="/narrative" element={<NarrativeRoom />} />
+            <Route path="/founder" element={<FounderRoom />} />
+            <Route path="/launch" element={<LaunchRoom />} />
+            <Route path="/people" element={<PeopleRoom />} />
+            <Route path="/media" element={<MediaRoom />} />
+            <Route path="/impact" element={<ImpactRoom />} />
           </Route>
         </Routes>
       </BrowserRouter>

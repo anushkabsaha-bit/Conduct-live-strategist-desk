@@ -15,7 +15,7 @@ function PromptDialog({ agent, open, onClose }) {
   const [d, setD] = useState(null);
   const [rev, setRev] = useState("");
   useEffect(() => { if (open) http.get(`/agents/${agent}/prompt`).then((r) => { setD(r.data); setRev(r.data.revisions.find((x) => x.active)?.text || ""); }); }, [open, agent]);
-  const save = async () => { await http.post(`/agents/${agent}/revisions`, { text: rev }); toast.success(rev ? "Revision saved — the original stays untouched" : "Revision cleared"); onClose(); };
+  const save = async () => { await http.post(`/agents/${agent}/revisions`, { text: rev }); toast.success(rev ? "Revision saved, the original stays untouched" : "Revision cleared"); onClose(); };
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent data-testid="prompt-dialog" className="bg-linen text-chocolate border-2 border-chocolate rounded-none max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -101,7 +101,7 @@ export default function AgentRoom() {
     await create("handoffs", { from_agent: agent, to_agent: to, message_id: m.id, excerpt: m.text.slice(0, 1500), ref_type: refType, ref_id: refId });
     const prefill = `Handoff from ${AGENTS[agent].name} (recorded): "${m.text.slice(0, 1200)}"\n\nPlease take this forward from your side.`;
     setParams({ agent: to, prefill, from: agent, ...(refType && refId ? { ref_type: refType, ref_id: refId } : {}) });
-    toast.success(`Handoff to ${AGENTS[to].name} recorded — review and send`);
+    toast.success(`Handoff to ${AGENTS[to].name} recorded, review and send`);
   };
   const clear = async () => { if (!window.confirm(`Clear ${AGENTS[agent].name}'s conversation history?`)) return; await http.delete(`/agents/${agent}/messages`); loadMsgs(); };
   const m = meta.find((x) => x.id === agent);
@@ -140,7 +140,7 @@ export default function AgentRoom() {
                 <select data-testid="ref-type-select" className="field" value={refType} onChange={(e) => { setRefType(e.target.value); setRefId(""); }}><option value="">No linked record</option>{Object.keys(REF_TYPES).map((k) => <option key={k} value={k}>{k}</option>)}</select>
                 {refType && <select data-testid="ref-id-select" className="field" value={refId} onChange={(e) => setRefId(e.target.value)}><option value="">Choose…</option>{refItems.map((it) => <option key={it.id} value={it.id}>{it[REF_TYPES[refType][1]]}</option>)}</select>}
               </div>
-              <Note className="mt-2">Every agent sees the linked record and the findings recorded on it — so work survives switching agents.</Note>
+              <Note className="mt-2">Every agent sees the linked record and the findings recorded on it, so work survives switching agents.</Note>
               {refId && (
                 <div className="mt-4 space-y-2">
                   <p className="kicker text-tangelo">Recorded findings on this record ({findings.length})</p>

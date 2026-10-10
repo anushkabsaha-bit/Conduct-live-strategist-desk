@@ -27,7 +27,7 @@ export const STAGES = ["Idea", "Research", "Evidence Needed", "Interview Ready",
 export const VERIF = {
   verified_dates: { label: "Dates verified", cls: "bg-[#2F7D4F] text-linen" },
   needs_validation: { label: "Needs validation", cls: "bg-botticelli text-chocolate" },
-  idea: { label: "Idea — not an event", cls: "border border-chocolate/50 text-chocolate" },
+  idea: { label: "Idea, not an event", cls: "border border-chocolate/50 text-chocolate" },
 };
 
 export const OPP_STATUS = ["new", "saved", "watch", "shortlisted", "rejected", "converted"];

@@ -54,7 +54,7 @@ export default function Campaigns() {
               <AgentRunCard agent="catherine" task="catherine.campaign_events" refType="campaign" refId={c.id} label="Where could it run?" hint="Uses saved Opportunity Radar records. Anything else is labelled an unverified lead." />
               <AgentRunCard agent="edith" task="edith.campaign_evidence" refType="campaign" refId={c.id} label="Product evidence" />
             </div>
-            <AgentRunCard dark agent="ana" task="ana.campaign_summary" refType="campaign" refId={c.id} label="Feasibility summary" hint="Best after DIANA, CATHERINE and EDITH have run — ANA only summarises recorded work." />
+            <AgentRunCard dark agent="ana" task="ana.campaign_summary" refType="campaign" refId={c.id} label="Feasibility summary" hint="Best after DIANA, CATHERINE and EDITH have run, ANA only summarises recorded work." />
             <div className="bg-chocolate text-linen p-6" data-testid="campaign-decision">
               <p className="kicker text-botticelli mb-2">Your decision</p>
               <p className="font-mono text-xs text-linen/70 mb-4">Agents recommend. You decide. Nothing is booked or approved until you choose.</p>

@@ -78,7 +78,9 @@ function OppRow({ o, reload, cmp, toggleCmp }) {
           </div>
           <Field label="Next action"><input className="field" defaultValue={o.next_action} onBlur={(e) => set({ next_action: e.target.value })} /></Field>
           <AgentRunCard agent="catherine" task="catherine.assess" refType="opportunity" refId={o.id} label="Assess" />
-          <AgentRunCard agent="diana" task="diana.opportunity_concept" refType="opportunity" refId={o.id} label="Creative participation concept" />
+          <AgentRunCard agent="diana" task="diana.opportunity_concept" refType="opportunity" refId={o.id} label="Develop a campaign idea with DIANA" hint="DIANA receives this event's details, audience, dates, participation notes and source link, plus CATHERINE's assessment if run." />
+          <AgentRunCard agent="catherine" task="catherine.constraints" refType="opportunity" refId={o.id} label="Practical constraints of DIANA's idea" hint="Run after DIANA. Reviews her concept against this opportunity's requirements." />
+          <AgentRunCard dark agent="ana" task="ana.next_steps" refType="opportunity" refId={o.id} label="Consolidated next steps" />
           <div className="flex flex-wrap gap-2">
             <Btn data-testid={`opp-project-${o.id}`} onClick={toProject} disabled={o.status === "converted"}><FolderPlus className="w-3.5 h-3.5" />{o.status === "converted" ? "Already a project" : "I approve: make it a project"}</Btn>
             <Btn variant="line" data-testid={`opp-reject-${o.id}`} onClick={reject}><Ban className="w-3.5 h-3.5" />Reject</Btn>
@@ -113,7 +115,7 @@ export default function Radar() {
       <PageHead n="05" kicker="Opportunity Radar" title="Where should Conduct" accent=" show up?" sub="Discover, verify, prioritise. Nothing becomes a commitment because an agent suggested it." />
       <section className="bg-linen text-chocolate px-5 md:px-10 pb-16 space-y-10">
         <div className="bg-tangelo text-linen p-5" data-testid="research-mode-banner">
-          <p className="kicker mb-1">Research mode: manual — live web research NOT configured</p>
+          <p className="kicker mb-1">Research mode: manual, live web research NOT configured</p>
           <p className="font-mono text-xs leading-relaxed">CATHERINE does not browse the web in this deployment. She produces research plans, assesses records you add, and labels everything else as an unverified lead. The seeded records with "Dates verified" were checked by the builder via web search before launch (source and check date shown). A Perplexity/Tavily research integration can be added later.</p>
         </div>
 
@@ -131,8 +133,8 @@ export default function Radar() {
                 <Tag tone="solid">{o.mode_note}</Tag>
                 <p className="font-mono text-sm"><Claim text={o.interpretation} /></p>
                 <div><p className="kicker text-tangelo mb-2">Search queries to run</p>{(o.search_queries || []).map((x, i) => <p key={i} className="font-mono text-xs py-1 border-b border-chocolate/15">{x}</p>)}</div>
-                <div><p className="kicker text-tangelo mb-2">Official sources to check</p>{(o.official_sources_to_check || []).map((x, i) => <p key={i} className="font-mono text-xs py-1">{x.source} — <span className="text-chocolate/70">{x.why}</span></p>)}</div>
-                <div data-testid="research-leads"><p className="kicker text-tangelo mb-2">Candidate leads — UNVERIFIED</p>
+                <div><p className="kicker text-tangelo mb-2">Official sources to check</p>{(o.official_sources_to_check || []).map((x, i) => <p key={i} className="font-mono text-xs py-1">{x.source}, <span className="text-chocolate/70">{x.why}</span></p>)}</div>
+                <div data-testid="research-leads"><p className="kicker text-tangelo mb-2">Candidate leads, UNVERIFIED</p>
                   {(o.candidate_leads || []).map((l, i) => (
                     <div key={i} className="flex flex-wrap items-start justify-between gap-3 py-2 border-b border-chocolate/15">
                       <div className="font-mono text-xs"><span className="font-bold">{l.name}</span> · {l.market} · {l.type}<p className="text-chocolate/70">{l.why_relevant}</p></div>
@@ -177,7 +179,7 @@ export default function Radar() {
             <div className="overflow-x-auto scroll-thin border-2 border-chocolate">
               <table className="w-full min-w-[700px] font-mono text-xs">
                 <tbody>{["name", "verification", "market", "location", "start_date", "deadline", "audience", "relevance", "cost", "status", "source_url"].map((k) => (
-                  <tr key={k} className="border-b border-chocolate/20"><td className="kicker text-tangelo p-3 w-36 bg-paper">{k.replace("_", " ")}</td>{compared.map((o) => <td key={o.id} className="p-3 align-top">{k === "source_url" && o[k] ? <a href={o[k]} target="_blank" rel="noreferrer" className="text-tangelo underline-grow">open</a> : o[k] || "—"}</td>)}</tr>
+                  <tr key={k} className="border-b border-chocolate/20"><td className="kicker text-tangelo p-3 w-36 bg-paper">{k.replace("_", " ")}</td>{compared.map((o) => <td key={o.id} className="p-3 align-top">{k === "source_url" && o[k] ? <a href={o[k]} target="_blank" rel="noreferrer" className="text-tangelo underline-grow">open</a> : o[k] || ", "}</td>)}</tr>
                 ))}</tbody>
               </table>
             </div>

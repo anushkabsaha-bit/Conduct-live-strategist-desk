@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import AgentRunCard from "../components/AgentRunCard";
 import { toast } from "sonner";
-import { Plus, Save, Check, X, GitCompare, Send } from "lucide-react";
+import { Plus, Save, Check, X, GitCompare, Send, Download } from "lucide-react";
 import { AgentChip, Btn, Empty, Field, Kicker, Note, PageHead, Tag } from "../components/kit";
 import { Claim, Output, PostChip } from "../components/Output";
 import { RunView } from "../components/AgentRunCard";
@@ -107,7 +109,7 @@ function BerdineView({ o, run, ctx }) {
   return (
     <div className="space-y-6">
       <p className="font-serifit italic text-xl leading-snug"><Claim text={o.headline} /></p>
-      <Tag tone="blue">{o.voice_profile_note || "Inferred voice profile — no internal style guide supplied"}</Tag>
+      <Tag tone="blue">{o.voice_profile_note || "Inferred voice profile, no internal style guide supplied"}</Tag>
       <Output data={{ what_sounds_right: o.what_works, inconsistent_with_voice: o.inconsistent_with_voice, unclear_or_jargon: o.unclear_or_jargon, audience_fit: o.audience_fit, cut: o.cut, keep: o.keep, uk_vs_us: o.uk_us_notes }} />
       <div><p className="kicker text-tangelo mb-2">Line edits</p><Suggestions edits={o.edits} runId={run.id} from="berdine" {...ctx} /></div>
       <div>
@@ -125,8 +127,59 @@ function SynthesisView({ o, run, ctx }) {
     <div className="space-y-6">
       <p className="font-serifit italic text-xl leading-snug"><Claim text={o.summary} /></p>
       <Output data={{ agreements: o.agreements, conflicts: o.conflicts }} />
-      <div><p className="kicker text-tangelo mb-2">Recommended edits — accept or reject each</p><Suggestions edits={o.recommended_edits} runId={run.id} from="ana" {...ctx} /></div>
+      <div><p className="kicker text-tangelo mb-2">Recommended edits, accept or reject each</p><Suggestions edits={o.recommended_edits} runId={run.id} from="ana" {...ctx} /></div>
       <Output data={{ outstanding_concerns: o.outstanding_concerns, next_step: o.next_step }} />
+    </div>
+  );
+}
+
+const CHANNELS = ["LinkedIn (company)", "LinkedIn (founder)", "Substack", "Medium", "Company blog", "Founder communications", "Short-form video"];
+const STAGE_LIST = [["A", "Choose the direction"], ["B", "Review the evidence"], ["C", "Write & adapt"], ["D", "Explain the choices"], ["F", "One idea, different formats"]];
+
+function TextOut({ o, loadText, extra }) {
+  return <div><Output data={o} />{o.draft && <div className="flex flex-wrap gap-4 mt-4"><button data-testid="load-generated-draft" onClick={() => loadText(o.draft, `BERDINE ${o.channel || "draft"}`)} className="font-mono text-[10px] tracking-[0.14em] uppercase text-tangelo underline-grow">Load into editor (save to keep)</button>{extra && extra(o)}</div>}</div>;
+}
+
+function Stages({ draft, stage, setStage, meta, loadText, reload, setId }) {
+  const b = draft.brief || {};
+  const [target, setTarget] = useState("Substack");
+  const [instr, setInstr] = useState("");
+  const [chs, setChs] = useState(["LinkedIn (company)", "Substack", "Medium", "Founder communications"]);
+  const setB = (k, v) => meta("brief", { ...b, [k]: v });
+  const brief = () => ({ ...b, format: draft.format, word_limit: draft.word_limit || "none supplied" });
+  const saveAsDraft = async (o) => {
+    const d = await create("drafts", { title: `${draft.title} (${o.channel || target})`, format: o.channel || target, audience: draft.audience, objective: draft.objective, word_limit: null, status: "draft", brief: { ...b, channel: o.channel || target, derived_from: draft.id }, versions: [{ n: 1, text: o.draft, note: `BERDINE adaptation for ${o.channel || target}`, source: "agent", created_at: new Date().toISOString() }] });
+    toast.success("Saved as a separate draft. The original is untouched."); await reload(); setId(d.id);
+  };
+  return (
+    <div className="border-2 border-chocolate bg-paper" data-testid="writing-stages">
+      <div className="flex flex-wrap border-b-2 border-chocolate">{STAGE_LIST.map(([k, l]) => <button key={k} data-testid={`stage-tab-${k}`} onClick={() => setStage(k)} className={`px-4 py-3 font-mono text-[10px] tracking-[0.14em] uppercase border-r border-chocolate/30 transition-colors ${stage === k ? "bg-chocolate text-linen" : "hover:bg-botticelli/20"}`}><span className="text-tangelo mr-1">{k}</span>{l}</button>)}</div>
+      <div className="p-5 space-y-5">
+        {stage === "A" && <>
+          <div className="grid md:grid-cols-3 gap-3" key={draft.id}>
+            <div className="md:col-span-3"><Field label="Subject or initial idea"><textarea data-testid="brief-subject" className="field" rows={2} defaultValue={b.subject || ""} onBlur={(e) => setB("subject", e.target.value)} /></Field></div>
+            <Field label="Publishing channel"><select data-testid="brief-channel" className="field" value={b.channel || ""} onChange={(e) => setB("channel", e.target.value)}><option value="">Choose…</option>{CHANNELS.map((c) => <option key={c}>{c}</option>)}</select></Field>
+            <Field label="Coverage"><select data-testid="brief-coverage" className="field" value={b.coverage || ""} onChange={(e) => setB("coverage", e.target.value)}><option value="">Choose…</option>{["First time covering this", "Follow-up", "Recurring series"].map((c) => <option key={c}>{c}</option>)}</select></Field>
+            <Field label="Deadline"><input type="date" className="field" defaultValue={b.deadline || ""} onBlur={(e) => setB("deadline", e.target.value)} /></Field>
+            <div className="md:col-span-3"><Field label="Source material (rough idea, announcement, transcript, document)"><textarea data-testid="brief-source" className="field" rows={3} defaultValue={b.source_material || ""} onBlur={(e) => setB("source_material", e.target.value)} /></Field></div>
+          </div>
+          <AgentRunCard agent="edith" task="edith.content_direction" refType="draft" refId={draft.id} label="Story direction & evidence needed" getInput={brief} hint="Audience, objective and word limit come from the fields above the editor." />
+        </>}
+        {stage === "B" && <AgentRunCard agent="agatha" task="agatha.evidence_patterns" refType="draft" refId={draft.id} label="Relevant patterns in Conduct's 38 posts" getInput={brief} hint="Each pattern shows what was observed, how many posts, the measure, and its limits. External hook-length claims are treated as hypotheses only." />}
+        {stage === "C" && <>
+          <AgentRunCard agent="berdine" task="berdine.write_draft" refType="draft" refId={draft.id} label="Write from the agreed direction" getInput={brief} render={(o) => <TextOut o={o} loadText={loadText} />} />
+          <div className="grid md:grid-cols-3 gap-3">
+            <Field label="Adapt for channel"><select data-testid="adapt-channel" className="field" value={target} onChange={(e) => setTarget(e.target.value)}>{CHANNELS.map((c) => <option key={c}>{c}</option>)}</select></Field>
+            <div className="md:col-span-2"><Field label="Instruction (optional)"><input data-testid="adapt-instruction" className="field" value={instr} onChange={(e) => setInstr(e.target.value)} placeholder="e.g. shorter, change the opening, for engineers, 3 alternative hooks" /></Field></div>
+          </div>
+          <AgentRunCard agent="berdine" task="berdine.adapt_channel" refType="draft" refId={draft.id} label="Adapt or rework" getInput={() => ({ ...brief(), target_channel: target, instruction: instr || "none" })} render={(o) => <TextOut o={o} loadText={loadText} extra={(x) => <button data-testid="save-adapted-draft" onClick={() => saveAsDraft(x)} className="font-mono text-[10px] tracking-[0.14em] uppercase text-tangelo underline-grow">Save as a separate {x.channel || target} draft</button>} />} />
+        </>}
+        {stage === "D" && <AgentRunCard agent="berdine" task="berdine.editorial_note" refType="draft" refId={draft.id} label="Why this draft is written this way" hint="Explains the actual choices in the current saved version." />}
+        {stage === "F" && <>
+          <div className="flex flex-wrap gap-3">{CHANNELS.map((c) => <label key={c} className="flex items-center gap-2 font-mono text-xs"><input type="checkbox" className="accent-tangelo" checked={chs.includes(c)} onChange={() => setChs(chs.includes(c) ? chs.filter((x) => x !== c) : [...chs, c])} />{c}</label>)}</div>
+          <AgentRunCard agent="berdine" task="berdine.one_idea_formats" refType="draft" refId={draft.id} label="One idea, different formats" getInput={() => ({ subject: b.subject || draft.title, channels: chs, source_material: b.source_material || "" })} />
+        </>}
+      </div>
     </div>
   );
 }
@@ -137,7 +190,9 @@ export default function ContentDesk() {
   const [text, setText] = useState("");
   const [choice, setChoice] = useState({});
   const [routed, setRouted] = useState(false);
-  const load = useCallback(async () => { const d = await list("drafts"); setDrafts(d); setId((cur) => cur || d[0]?.id); return d; }, []);
+  const [params] = useSearchParams();
+  const [stage, setStage] = useState("A");
+  const load = useCallback(async () => { const d = await list("drafts"); setDrafts(d); setId((cur) => cur || params.get("draft") || d[0]?.id); return d; }, []); // eslint-disable-line
   useEffect(() => { load(); }, [load]);
   const draft = drafts.find((d) => d.id === id);
   const cur = draft?.versions[draft.versions.length - 1];
@@ -151,7 +206,7 @@ export default function ContentDesk() {
   };
   const saveVersion = async (t, note, extra = {}) => {
     await http.post(`/drafts/${id}/versions`, { text: t, note, ...extra });
-    toast.success("Saved as a new version — the original is kept"); load();
+    toast.success("Saved as a new version, the original is kept"); load();
   };
   const accepted = Object.keys(choice).filter((k) => !k.endsWith("#e") && choice[k] === "accepted");
   const rejected = Object.keys(choice).filter((k) => !k.endsWith("#e") && choice[k] === "rejected");
@@ -159,7 +214,7 @@ export default function ContentDesk() {
     let t = text, miss = 0;
     accepted.forEach((k) => { const e = choice[`${k}#e`]; if (t.includes(e.before)) t = t.replace(e.before, e.after); else miss++; });
     await saveVersion(t, `Applied ${accepted.length - miss} accepted suggestion(s)`, { source: "accepted_suggestions", accepted: accepted.map((k) => choice[`${k}#e`]), rejected: rejected.map((k) => choice[`${k}#e`]) });
-    if (miss) toast.warning(`${miss} accepted edit(s) could not be applied automatically — the text had changed.`);
+    if (miss) toast.warning(`${miss} accepted edit(s) could not be applied automatically, the text had changed.`);
   };
   const route = () => {
     setRouted(true);
@@ -202,11 +257,14 @@ export default function ContentDesk() {
               <div>
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                   <p className="kicker text-tangelo">Editor · current v{cur.n} · {words(text)} words{draft.word_limit ? ` / limit ${draft.word_limit}` : ""}{draft.word_limit && words(text) > draft.word_limit && <span className="ml-2 bg-tangelo text-linen px-1">over limit</span>}</p>
+                  <Btn variant="line" data-testid="export-draft-btn" onClick={() => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type: "text/plain" })); a.download = `${draft.title.replace(/\W+/g, "-")}-v${cur.n}.txt`; a.click(); }}><Download className="w-3.5 h-3.5" />Export</Btn>
                   <Btn data-testid="save-version-btn" onClick={() => saveVersion(text, "Manual edit")} disabled={text === cur.text}><Save className="w-3.5 h-3.5" />Save as v{cur.n + 1}</Btn>
                 </div>
                 <textarea data-testid="draft-editor" className="field !text-base leading-relaxed min-h-[280px] spotlight" value={text} onChange={(e) => setText(e.target.value)} placeholder="Paste or write your draft…" />
               </div>
 
+              <Stages draft={draft} stage={stage} setStage={setStage} meta={meta} loadText={ctx.loadText} reload={load} setId={setId} />
+              <p className="kicker text-tangelo pt-2">Review the current version</p>
               <div className="bg-chocolate text-linen p-5 md:p-6" style={{ borderTop: "6px solid #6E4BB8" }}>
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-3"><AgentChip id="ana" /><p className="font-display uppercase text-xl">Route for review</p></div>
@@ -220,7 +278,7 @@ export default function ContentDesk() {
                 <RunView agent="agatha" task="agatha.review" label="Performance review" hook={ag} version={cur.n} getInput={() => ({ format: draft.format, audience: draft.audience, objective: draft.objective, word_limit: draft.word_limit || "none supplied" })} render={(o, r) => <AgathaView o={o} run={r} ctx={ctx} />} />
                 <RunView agent="berdine" task="berdine.review" label="Editorial review" hook={be} version={cur.n} getInput={() => ({ format: draft.format, audience: draft.audience, objective: draft.objective, word_limit: draft.word_limit || "none supplied" })} render={(o, r) => <BerdineView o={o} run={r} ctx={ctx} />} />
               </div>
-              <RunView agent="ana" task="ana.synthesis" label="Synthesis" hook={syn} version={cur.n} hint={both ? "Both reviews exist. Ask ANA to synthesise them into one recommended edit list." : "Run AGATHA and BERDINE first — ANA only synthesises recorded reviews."} render={(o, r) => <SynthesisView o={o} run={r} ctx={ctx} />} />
+              <RunView agent="ana" task="ana.synthesis" label="Synthesis" hook={syn} version={cur.n} hint={both ? "Both reviews exist. Ask ANA to synthesise them into one recommended edit list." : "Run AGATHA and BERDINE first, ANA only synthesises recorded reviews."} render={(o, r) => <SynthesisView o={o} run={r} ctx={ctx} />} />
 
               <div className="border-2 border-chocolate p-5 bg-paper flex flex-wrap items-center justify-between gap-4" data-testid="apply-bar">
                 <p className="font-mono text-xs">{accepted.length} accepted · {rejected.length} rejected</p>
@@ -241,7 +299,7 @@ export default function ContentDesk() {
               <div className="bg-chocolate text-linen p-6" data-testid="approval-step">
                 <p className="kicker text-botticelli mb-2">Final human decision</p>
                 <p className="font-display uppercase text-3xl mb-1">Status: <span data-testid="draft-status" className="text-tangelo">{draft.status.replace("_", " ")}</span></p>
-                <p className="font-mono text-xs text-linen/70 mb-4">No publishing integration is configured. Nothing is published by the app — "published" only records that you published it yourself.</p>
+                <p className="font-mono text-xs text-linen/70 mb-4">No publishing integration is configured. Nothing is published by the app, "published" only records that you published it yourself.</p>
                 <div className="flex flex-wrap gap-2">
                   <Btn variant="lineDark" data-testid="status-in-review" onClick={() => setStatus("in_review", "Marked in review")}>In review</Btn>
                   <Btn variant="lineDark" data-testid="status-approved" onClick={() => setStatus("approved", "Approved")}>Approve v{cur.n}</Btn>

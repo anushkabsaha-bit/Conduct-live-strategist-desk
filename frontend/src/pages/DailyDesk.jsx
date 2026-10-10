@@ -15,13 +15,13 @@ const greet = () => { const h = new Date().getHours(); return h < 12 ? "Morning"
 const IMP = { high: 0, medium: 1, low: 2 };
 
 const QUICK = [
-  ["Write or review a post", "/content", "berdine"],
-  ["Find communications opportunities", "/radar", "catherine"],
-  ["Develop a product or customer story", "/stories", "edith"],
-  ["Plan a campaign or activation", "/campaigns", "diana"],
-  ["Prepare for a founder conversation", `/agents?agent=edith&prefill=${encodeURIComponent("Help me prepare for a founder conversation: founder language, product positioning and stories worth telling. Ask me what you need first.")}`, "edith"],
-  ["Review content performance", `/agents?agent=agatha&prefill=${encodeURIComponent("Review Conduct's historical content performance from the 38-post dataset. What patterns are supported, and where is the sample too small?")}`, "agatha"],
-  ["Plan next week's calendar", `/agents?agent=ana&prefill=${encodeURIComponent("Help me plan next week's calendar. What should get protected time, and what can wait?")}`, "ana"],
+  ["Write or review content", "/content", "berdine"],
+  ["Prepare a founder briefing", "/founder", "edith"],
+  ["Develop a product story", "/stories", "edith"],
+  ["Research opportunities", "/radar", "catherine"],
+  ["Plan a launch", "/launch", "ana"],
+  ["Plan a campaign", "/campaigns", "diana"],
+  ["Review communications impact", "/impact", "agatha"],
 ];
 
 function Briefing({ o, nav }) {
@@ -51,7 +51,7 @@ function Briefing({ o, nav }) {
       </div>
       {!!o.proposed_delegations?.length && (
         <div>
-          <p className="kicker text-botticelli mb-3">Proposed delegations — not yet run</p>
+          <p className="kicker text-botticelli mb-3">Proposed delegations, not yet run</p>
           <div className="grid md:grid-cols-2 gap-3">
             {o.proposed_delegations.map((d, i) => {
               const a = Object.keys(AGENTS).find((x) => (d.agent || "").toLowerCase().includes(x));
@@ -68,7 +68,7 @@ function Briefing({ o, nav }) {
         </div>
       )}
       <div className="grid md:grid-cols-3 gap-6">
-        {[["Missing information", o.missing_information], ["Risks", o.risks], ["Deprioritised", (o.deprioritised || []).map((d) => `${d.item} — ${d.reason}`)]].map(([t, xs]) => (
+        {[["Missing information", o.missing_information], ["Risks", o.risks], ["Deprioritised", (o.deprioritised || []).map((d) => `${d.item}, ${d.reason}`)]].map(([t, xs]) => (
           <div key={t}><p className="kicker text-botticelli mb-2">{t}</p><ul className="space-y-1.5">{(xs || []).map((x, i) => <li key={i} className="font-mono text-xs text-linen/80"><span className="text-tangelo mr-2">×</span><Claim text={x} /></li>)}</ul></div>
         ))}
       </div>
@@ -89,7 +89,7 @@ function TaskRow({ t, reload }) {
           <p className={`font-mono text-sm ${done ? "line-through opacity-50" : ""}`}>{t.title}</p>
           <div className="flex flex-wrap items-center gap-2 mt-1.5">
             {AGENTS[t.agent] ? <AgentChip id={t.agent} /> : <Tag>{t.agent}</Tag>}
-            <Tag>{t.kind?.replace("_", " ")}</Tag>{t.due && <Tag tone="blue">Due {t.due}</Tag>}{t.illustrative && <Tag>Illustrative</Tag>}
+            <select data-testid={`task-status-${t.id}`} className="font-mono text-[10px] uppercase bg-transparent border border-chocolate/40 px-1" value={t.status} onChange={async (e) => { await update("tasks", t.id, { status: e.target.value }); reload(); }}>{["open", "in_progress", "done", "approved"].map((x) => <option key={x}>{x}</option>)}</select><Tag>{t.kind?.replace("_", " ")}</Tag>{t.project_id && <Tag tone="dark">Project linked</Tag>}{t.due && <Tag tone="blue">Due {t.due}</Tag>}{t.illustrative && <Tag>Illustrative</Tag>}
           </div>
         </div>
         <button onClick={() => setOpen(!open)} data-testid={`task-expand-${t.id}`} className="text-chocolate/60 hover:text-tangelo"><ChevronDown className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`} /></button>
@@ -144,7 +144,7 @@ export default function DailyDesk() {
             <p data-testid="desk-date" className="font-display uppercase text-3xl md:text-4xl">{new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</p>
           </div>
         </div>
-        <p className="font-hand text-xl text-chocolate/70 mt-6 -rotate-1">calendar blocks & tasks here are illustrative — not booked Conduct meetings.</p>
+        <p className="font-hand text-xl text-chocolate/70 mt-6 -rotate-1">calendar blocks & tasks here are illustrative, not booked Conduct meetings.</p>
       </section>
 
       <section className="bg-chocolate text-linen px-5 md:px-10 py-14 md:py-20">
@@ -184,8 +184,9 @@ export default function DailyDesk() {
       <section className="bg-linen text-chocolate px-5 md:px-10 pb-14 md:pb-20">
         <div className="grid md:grid-cols-12 gap-10">
           <div className="md:col-span-7" data-testid="priorities-list">
-            <Kicker n="C">Daily priorities · ranked by importance, then due date</Kicker>
-            {open.length ? open.map((t) => <TaskRow key={t.id} t={t} reload={load} />) : <Empty title="Clear desk.">No open tasks. Turn any agent recommendation into a task with "Make task".</Empty>}
+            <Kicker n="C">Today's priorities · from your saved tasks, by importance then due date</Kicker>
+            {open.length ? open.slice(0, 5).map((t) => <TaskRow key={t.id} t={t} reload={load} />) : <Empty title="Clear desk.">No open tasks. Turn any agent recommendation into a task with "Make task".</Empty>}
+            {open.length > 5 && <details className="mt-4"><summary className="kicker text-tangelo cursor-pointer" data-testid="more-tasks">{open.length - 5} more open tasks</summary>{open.slice(5).map((t) => <TaskRow key={t.id} t={t} reload={load} />)}</details>}
             {followups.length > 0 && <p className="font-mono text-[11px] text-chocolate/60 mt-4">{followups.length} research / decision follow-ups among these.</p>}
           </div>
           <div className="md:col-span-5" data-testid="quick-actions">

@@ -28,7 +28,7 @@ export default function BlockDialog({ block, open, onClose, onSaved }) {
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent data-testid="block-dialog" className="bg-linen text-chocolate border-2 border-chocolate rounded-none max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle className="font-display uppercase text-3xl">{f.id ? "Work block" : "New work block"}</DialogTitle><DialogDescription className="sr-only">Edit details</DialogDescription></DialogHeader>
-        {f.illustrative && <Tag tone="blue" className="w-fit">Illustrative — not a confirmed meeting</Tag>}
+        {f.illustrative && <Tag tone="blue" className="w-fit">Illustrative, not a confirmed meeting</Tag>}
         {f.id && (
           <div className="border-2 border-chocolate p-4 bg-paper" data-testid="block-start-work">
             <p className="kicker text-tangelo mb-2">Start the work</p>

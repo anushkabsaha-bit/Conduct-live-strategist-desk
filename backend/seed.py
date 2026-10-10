@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 import uuid
 
-ILL = "Illustrative work block — not a confirmed Conduct meeting."
+ILL = "Illustrative work block, not a confirmed Conduct meeting."
 
 
 def _id():
@@ -20,7 +20,7 @@ def week_monday(d=None):
 def calendar_blocks(monday):
     B = [
         (0, "09:00", "10:00", "Weekly communications planning", "planning", "Set the week's communications priorities and decide what is worth shipping.", "", ["ana"], "weekly"),
-        (0, "10:30", "11:30", "Review last week's content performance", "performance", "Look at what performed, what did not, and why — with AGATHA and the 38-post baseline.", "", ["agatha"], "weekly"),
+        (0, "10:30", "11:30", "Review last week's content performance", "performance", "Look at what performed, what did not, and why, with AGATHA and the 38-post baseline.", "", ["agatha"], "weekly"),
         (0, "13:00", "14:00", "Team priorities & editorial planning", "planning", "Align editorial slate with team priorities.", "Comms team (illustrative)", ["ana", "berdine"], "none"),
         (0, "14:30", "17:00", "Draft & research time", "editorial", "Protected writing and research block.", "", ["berdine"], "weekly"),
         (1, "09:30", "10:30", "Product team conversation", "product_story", "Understand what Product is actually building and what changed for the customer.", "Product team (to be confirmed)", ["edith"], "none"),
@@ -57,7 +57,7 @@ def tasks(monday):
          "Draft is waiting for review; nothing ships without your approval.", "Run AGATHA + BERDINE reviews, then ANA synthesis."),
         ("Verify WeAreDevelopers World Congress 2026 call-for-speakers deadline", "catherine", d(3), "low", "follow_up",
          "A call for speakers exists on Sessionize but the deadline was not confirmed.", "Open the official source and record the deadline."),
-        ("Decide: SAP Score booth — test, develop or reject", "diana", d(4), "medium", "decision",
+        ("Decide: SAP Score booth, test, develop or reject", "diana", d(4), "medium", "decision",
          "Example concept only; needs DIANA's pressure-test and a decision.", "Run DIANA's pressure-test in Campaign Studio."),
     ]
     return [{"id": _id(), "title": t, "agent": a, "due": due, "importance": imp, "kind": k, "why": why, "next_action": na,
@@ -81,7 +81,7 @@ What breaks first in your organisation when the map stops matching the territory
 def drafts():
     return [{"id": _id(), "title": "The wrongness of a perfectly written document", "format": "LinkedIn post", "audience": "Enterprise / CIO / IT leadership",
              "objective": "Make the problem felt", "word_limit": None, "status": "in_review", "related_story": "",
-             "provenance": "Anushka's first draft from the portfolio site — not official Conduct copy; based only on publicly available information.",
+             "provenance": "Anushka's first draft from the portfolio site, not official Conduct copy; based only on publicly available information.",
              "versions": [{"n": 1, "text": FREUD_DRAFT, "note": "Original draft", "source": "user", "created_at": now()}],
              "created_at": now(), "updated_at": now()}]
 
@@ -89,10 +89,10 @@ def drafts():
 def stories():
     return [
         {"id": _id(), "title": "Freudenberg × process documentation", "stage": "Research", "kind": "product_launch",
-         "what_happened": "Anushka's portfolio draft states Conduct is exploring a process-documentation capability with Freudenberg.",
+         "what_happened": "Conduct publicly posted that it is working on a brand-new feature with Freudenberg, aimed at keeping SAP process documentation accurate, current and connected to reality.", "source_url": "https://www.linkedin.com/posts/conduct-ai_were-working-on-a-brand-new-feature-at-conduct-activity-7498006623475445762-LvUs",
          "audience": "Enterprise / CIO / IT leadership; practitioners; engineers",
-         "known_facts": [{"fact": "Conduct is exploring a capability to keep process documentation current, with Freudenberg (as written in Anushka's draft, 'based only on publicly available information').", "status": "stated_unsourced"},
-                         {"fact": "Dataset P27: 'A brand new feature introduced' (76 likes, 6 comments, 1 repost) — feature not named.", "status": "dataset"}],
+         "known_facts": [{"fact": "Conduct is exploring a capability to keep process documentation current, with Freudenberg (as written in Anushka's draft, 'based only on publicly available information').", "status": "verified"},
+                         {"fact": "Dataset P27: 'A brand new feature introduced' (76 likes, 6 comments, 1 repost), feature not named.", "status": "dataset"}],
          "open_questions": ["Which public Conduct source confirms the Freudenberg work?", "Has Freudenberg approved being named?", "What changed for the teams involved?"],
          "approvals": {"Product review": False, "Engineering review": False, "Customer approval": False, "Claims checked": False, "Quotes approved": False, "Screenshots approved": False, "Final edit": False},
          "formats": ["LinkedIn", "Customer story", "Product explainer", "Technical deep dive"], "illustrative": False, "created_at": now()},
@@ -106,17 +106,17 @@ def stories():
 
 def campaigns():
     return [{"id": _id(), "name": "SAP Score booth", "status": "example_concept", "event": "A future London technology event (not booked)",
-             "brief": "A physical Conduct photo booth: someone gets a Polaroid and a completely ridiculous 'SAP Score' — not a real measurement, just Conduct making fun of the reality of working with massive SAP environments.",
+             "brief": "A physical Conduct photo booth: someone gets a Polaroid and a completely ridiculous 'SAP Score', not a real measurement, just Conduct making fun of the reality of working with massive SAP environments.",
              "audience": "SAP and enterprise practitioners, CIOs and transformation leaders, potential customers, potential talent.",
              "objective": "Make enterprise SAP pain memorable and start conversations.",
              "insight": "The point isn't the photo. The point is recognition: 'unfortunately, that is exactly my life.'",
-             "concept": "SAP Score: 21% — 'Your SAP is being held together by thoughts and prayers.' 87% — 'You may actually know what's going on.' Second layer: 'Have you met Conduct before?' — the Polaroid on the office fridge if they join.",
+             "concept": "SAP Score: 21%, 'Your SAP is being held together by thoughts and prayers.' 87%, 'You may actually know what's going on.' Second layer: 'Have you met Conduct before?', the Polaroid on the office fridge if they join.",
              "alternatives": "", "resources": "Creative, design, engineering or product input, event logistics, photography, content capture, approval.",
-             "budget": "Unknown — no budget supplied.", "dependencies": "What can Conduct substantiate? What can the scoring logic safely say?", "risks": "People take the photo but can't remember Conduct. The joke becomes more memorable than the problem.",
+             "budget": "Unknown, no budget supplied.", "dependencies": "What can Conduct substantiate? What can the scoring logic safely say?", "risks": "People take the photo but can't remember Conduct. The joke becomes more memorable than the problem.",
              "timeline": "", "distribution": "Live event posts, short clips, founder post, photo carousel, event recap.",
              "metrics": "Participation, completion rate, shares, conversations started, whether people can say what Conduct does afterwards.",
              "kill_criteria": "People walk straight past it. It looks like every other tech event activation. Logistics cost more than the value.",
-             "provenance": "From Anushka's Growth OS and portfolio Experiment Lab. Editable example concept — not an approved or scheduled Conduct initiative.",
+             "provenance": "From Anushka's Growth OS and portfolio Experiment Lab. Editable example concept, not an approved or scheduled Conduct initiative.",
              "decision": "", "created_at": now()}]
 
 
@@ -159,10 +159,10 @@ def opportunities():
 def sources(prompt_lengths, dataset_rows):
     S = []
     for a, n in prompt_lengths.items():
-        S.append({"id": _id(), "category": "original_prompts", "title": f"{a.upper()} — original Zapier prompt", "kind": "pdf" if a != "berdine" else "pasted_text",
+        S.append({"id": _id(), "category": "original_prompts", "title": f"{a.upper()}, original Zapier prompt", "kind": "pdf" if a != "berdine" else "pasted_text",
                   "status": "ingested", "detail": f"{n:,} characters extracted verbatim. Stored read-only; revisions saved separately.", "url": "", "ref": a, "created_at": now()})
     S += [
-        {"id": _id(), "category": "historical_posts", "title": "Conduct LinkedIn analysis — 38 posts", "kind": "pdf", "status": "ingested",
+        {"id": _id(), "category": "historical_posts", "title": "Conduct LinkedIn analysis, 38 posts", "kind": "pdf", "status": "ingested",
          "detail": f"{dataset_rows} rows parsed (month, description, likes, comments, reposts). Full post text not supplied.", "url": "", "ref": "dataset", "created_at": now()},
         {"id": _id(), "category": "strategy", "title": "Conduct Growth OS (Conduct@growth generalist.pdf)", "kind": "pdf", "status": "ingested",
          "detail": "6 pages; text extracted. 90-day plan, outsider test, agent roles, SAP Score reference.", "url": "", "ref": "growth_os", "created_at": now()},

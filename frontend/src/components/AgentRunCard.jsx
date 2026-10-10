@@ -36,12 +36,12 @@ export function RunView({ agent, task, label, getInput, render, dark, hint, test
         </div>
       </div>
       {running && <p data-testid={`run-working-${tid}`} className="font-hand text-xl mb-3 animate-pulse">{AGENTS[agent].name} is working on it… this usually takes 30–90 seconds.</p>}
-      {error && !running && <p data-testid={`run-error-${tid}`} className="font-mono text-xs bg-tangelo text-linen px-3 py-2 mb-3">Failed: {error}. Nothing was saved — press Run again to retry.</p>}
+      {error && !running && <p data-testid={`run-error-${tid}`} className="font-mono text-xs bg-tangelo text-linen px-3 py-2 mb-3">Failed: {error}. Nothing was saved, press Run again to retry.</p>}
       {shown ? (
         <div data-testid={`run-output-${tid}`}>
           <p className={`flex items-center gap-2 font-mono text-[10px] tracking-[0.12em] uppercase mb-4 ${dark ? "text-linen/60" : "text-chocolate/60"}`}>
             <History className="w-3 h-3" /> Completed analysis · {AGENTS[agent].name} · {fmtDate(shown.created_at)}{shown.snapshot?.version ? ` · on v${shown.snapshot.version}` : ""}
-            {stale && <span className="text-tangelo">· draft has changed since — re-run</span>}
+            {stale && <span className="text-tangelo">· draft has changed since, re-run</span>}
           </p>
           {render ? render(shown.output, shown) : <Output data={shown.output} dark={dark} />}
         </div>

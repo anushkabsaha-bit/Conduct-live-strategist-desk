@@ -27,13 +27,13 @@ export function PostChip({ id }) {
             <p className="font-mono text-xs leading-relaxed mb-3">{p.description}</p>
             <div className="grid grid-cols-3 border-t border-chocolate/30 pt-2 text-center">
               {["likes", "comments", "reposts"].map((k) => (
-                <div key={k}><p className="font-display text-2xl text-tangelo">{p[k] ?? "—"}</p><p className="kicker text-chocolate/60">{k}</p></div>
+                <div key={k}><p className="font-display text-2xl text-tangelo">{p[k] ?? ", "}</p><p className="kicker text-chocolate/60">{k}</p></div>
               ))}
             </div>
             {p.note && <p className="font-mono text-[10px] italic mt-2 text-chocolate/70">{p.note}</p>}
             <p className="font-mono text-[10px] mt-2 text-chocolate/50">Source: {p.source}</p>
           </div>
-        ) : <p className="font-mono text-xs">Post {id} is not in the supplied dataset — treat this reference with caution.</p>}
+        ) : <p className="font-mono text-xs">Post {id} is not in the supplied dataset, treat this reference with caution.</p>}
       </PopoverContent>
     </Popover>
   );
@@ -72,7 +72,7 @@ export function Markdown({ text }) {
 }
 
 function renderValue(v, dark) {
-  if (v == null || v === "") return <span className="opacity-50">—</span>;
+  if (v == null || v === "") return <span className="opacity-50">, </span>;
   if (Array.isArray(v)) {
     if (!v.length) return <span className="opacity-50">None</span>;
     if (v.every((x) => typeof x !== "object")) {
