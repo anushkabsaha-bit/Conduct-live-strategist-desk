@@ -1,0 +1,25 @@
+{
+  "summary": "Iteration 4 frontend-only verification of strategist-as-main-character flow on the Freudenberg draft (01054c5e-1b45-4801-8172-6089d23a89b8) and Founder room illustrative scenario. All 7 feature checks passed. One real LLM run executed (edith.founder_messages, ~52s). ContentDesk: stage keys are A/B/C/D/F; Stage B renders AGATHA sentence-by-sentence (agatha-sentences), relevant posts (agatha-relevant-posts), 98 post-chips with evidence popovers (post-chip-* -> post-evidence-* opens on click), BERDINE revised draft with berdine-use-version, ANA 'Two decisions for you' (ana-decisions). Each run card exposes run-received-* summary with the actual input (received pre lengths 2371/2371/8000 chars, all start with '=== RECORD (draft) ==='). Stage D 'My editorial decision' renders decision-original, decision-agent-compare (AGATHA vs BERDINE side-by-side), all five note fields, judgement-status chip transitions correctly: 'Needs your judgement' (initial) -> 'Fact check required' (after facts filled + save) -> 'Decision recorded' (after record). decision-record button is correctly disabled without final OR without reasoning, enabled only when both present. After record on v1 with 'Keep as draft' + reasoning, decision-history entry appears with version, final value and reasoning; survives reload (decision-agree/reflection values persist, history persists, status chip stays 'Decision recorded'). Suggestion workflow: accept-agatha-0 + reject-berdine-0 then apply-accepted-btn -> API confirms versions grew to n=2 with source='accepted_suggestions', v1 preserved, version-compare visible. Manual editor edit + save-version-btn -> v3 saved with source='user'; reload shows text persists. Founder room (/founder): ws-load-example loads example; clearing ws-event_url + choosing ws-scenario 'Developer conference (engineers)' then run-btn-edith-founder_messages produced run-output-edith-founder_messages with 'HYPOTHETICAL briefing, not a confirmed engagement' label and three approaches with distinct types ('big idea', 'practical story', 'challenging question'); run-received-edith-founder_messages contains the actual workspace record sent to EDITH.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/backend/tests/test_backend.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ContentDesk.jsx MyDecision statusMap (line 139) couples the strategist's final-decision wording to draft status strings. If DECISIONS labels are renamed in future, status will silently become undefined. Consider defining the mapping as a constant beside DECISIONS and asserting completeness.",
+    "ContentDesk.jsx is 350+ lines mixing AgathaView/BerdineView/SynthesisView/MyDecision/Stages/main component. Extracting MyDecision and the three agent views into /components/contentdesk/*.jsx would make the file easier to maintain and test.",
+    "Output.jsx PostChip (line 21) renders the inline button with a hover popover; many chips (98 on this draft) all mount their popover DOM eagerly. Lazy-mount the popover on hover/focus to reduce DOM weight on large drafts.",
+    "AgentRunCard.jsx run-received panel always renders the full input pre; for very long inputs it is already capped at max-h-72 with scroll but the raw text (up to 8000 chars) is still shipped in the DOM. Consider truncating with 'show more' for inputs > ~4KB."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only task)", "frontend": "100% (7/7 feature checks)"},
+  "test_credentials": "None (no auth).",
+  "seed_data_creation": "Added TEST_-prefixed decision notes + recorded decision ('Keep as draft', reasoning) on Freudenberg draft 01054c5e-...; added v2 (accepted_suggestions) and v3 (manual TEST_ edit) versions as part of required test flow. Freudenberg draft itself preserved. Cleaned up Founder-room workspace 8e0754d9-c959-4094-8046-e98d2ff9d262 created during HYPOTHETICAL run. Did NOT touch the seeded 'Illustrative: founder at an enterprise transformation conference' worked example or other seed data.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All seven features in the review request work end-to-end. Freudenberg draft id = 01054c5e-1b45-4801-8172-6089d23a89b8 now has 3 versions (v1 original, v2 from accepted suggestion flow, v3 TEST_ manual edit) and a decision history entry recorded by this iteration. If a future iteration needs a clean draft for the record-decision flow, delete the TEST_ note content via API or clone the draft. Stage keys in ContentDesk are A (direction), B (review), C (write&adapt), D (explain the choices / my editorial decision), F (formats) - no 'review' key, callers should use stage-tab-B for AGATHA/BERDINE/ANA. Founder room scenario select is ws-scenario; event_url is ws-event_url; running edith.founder_messages took ~52s on this run.",
+  "rca of the issue": "N/A - no bugs found."
+}

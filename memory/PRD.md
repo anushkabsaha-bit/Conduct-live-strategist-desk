@@ -47,3 +47,11 @@ Interactive AI-powered working desk demonstrating how Anushka Saha would run the
 - P1: File upload/ingestion via object storage with processing status; drag-and-drop calendar moves; Google Calendar sync
 - P1: Inline edit of opportunity fields; project detail page
 - P2: Publishing integrations (LinkedIn/Substack) behind explicit approval; access control for deployment
+
+## Iteration 3 (strategist as main character, 2026-10-10)
+- Freudenberg draft "Enterprise software has a documentation problem" seeded with brief (seed.py + DB)
+- New AGATHA/BERDINE/ANA review schemas (strongest idea, biggest weakness, sentence verdicts, success beyond engagement, experiments; BERDINE human vs company copy, customer name-drop check, one revised draft; ANA agreements/conflicts/evidence vs hypothesis/unknowns/two decisions, no winner)
+- My Editorial Decision section (side-by-side, agent compare, notes, reflection, facts to check, decision + reasoning + history, status chip); only it changes draft status
+- Run cards show what the agent actually received (stored on run)
+- Founder room: illustrative scenario without URL; three approaches (big idea / practical story / challenging question)
+- Tested iteration_4: 7/7
