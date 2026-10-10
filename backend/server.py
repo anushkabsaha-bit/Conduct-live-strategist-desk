@@ -260,7 +260,7 @@ async def run_task(body: dict = Body(...)):
     snapshot = {"version": item["versions"][-1]["n"]} if ref_type == "draft" and item else {}
     system = A.build_system(agent, await active_revision(agent))
     run = {"id": str(uuid.uuid4()), "task": task, "agent": agent, "ref_type": ref_type, "ref_id": ref_id, "input": extra, "snapshot": snapshot,
-           "status": "running", "output": {}, "created_at": now()}
+           "status": "running", "output": {}, "received": ("\n\n".join(parts))[:8000], "created_at": now()}
     await db.runs.insert_one(dict(run))
     asyncio.create_task(execute_run(run["id"], system, A.task_prompt(task, "\n\n".join(parts))))
     return run

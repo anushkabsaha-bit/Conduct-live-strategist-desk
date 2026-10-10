@@ -71,53 +71,37 @@ function Suggestions({ edits, runId, choice, setChoice, text, from }) {
   );
 }
 
+const SENT = { working: "green", unclear: "blue", generic: "line", unsupported: "solid" };
+
 function AgathaView({ o, run, ctx }) {
   return (
     <div className="space-y-6">
       <p className="font-serifit italic text-xl leading-snug"><Claim text={o.headline} /></p>
-      <div className="flex flex-wrap gap-2"><Tag tone="dark">Confidence: {o.confidence}</Tag><Tag tone="blue">Word limit: {o.word_limit_check}</Tag></div>
-      <p className="font-mono text-[11px] text-chocolate/70">{o.confidence_reason}</p>
-      <div>
-        <p className="kicker text-tangelo mb-2">Key observations</p>
-        {(o.observations || []).map((x, i) => (
-          <div key={i} className="py-2 border-b border-chocolate/15 font-mono text-xs leading-relaxed">
-            <Tag tone={x.label === "DATASET" ? "blue" : x.label === "HYPOTHESIS" ? "line" : "dark"} className="mr-2">{x.label}</Tag><Claim text={x.point} /> {(x.evidence_post_ids || []).filter((p) => !x.point.includes(p)).map((p) => <PostChip key={p} id={p} />)}
-          </div>
-        ))}
+      <div className="flex flex-wrap gap-2"><Tag tone="dark">Confidence: {o.confidence}</Tag></div>
+      <Output data={{ strongest_idea: o.strongest_idea, biggest_weakness: o.biggest_weakness, problem_or_announcement: o.problem_or_announcement }} />
+      <div data-testid="agatha-sentences"><p className="kicker text-tangelo mb-2">Sentence by sentence</p>
+        {(o.sentences || []).map((x, i) => <div key={i} className="py-2 border-b border-chocolate/15 font-mono text-xs"><Tag tone={SENT[x.verdict] || "line"} className="mr-2">{x.verdict}</Tag><span className="italic">"{x.sentence}"</span><p className="text-chocolate/70 mt-1"><Claim text={x.why} /></p></div>)}
       </div>
+      <div><p className="kicker text-tangelo mb-2">Observations</p>
+        {(o.observations || []).map((x, i) => <div key={i} className="py-2 border-b border-chocolate/15 font-mono text-xs leading-relaxed"><Tag tone={x.label === "DATASET" ? "blue" : x.label === "HYPOTHESIS" ? "line" : "dark"} className="mr-2">{x.label}</Tag><Claim text={x.point} /> {(x.evidence_post_ids || []).filter((p) => !x.point.includes(p)).map((p) => <PostChip key={p} id={p} />)}</div>)}
+      </div>
+      <div data-testid="agatha-relevant-posts"><p className="kicker text-tangelo mb-2">Historical posts behind this (click to inspect)</p>{(o.relevant_posts || []).map((p) => <p key={p.post_id} className="font-mono text-xs mb-1.5"><PostChip id={p.post_id} /> <Claim text={p.why_relevant} /></p>)}</div>
       <div><p className="kicker text-tangelo mb-2">Suggested edits</p><Suggestions edits={o.edits} runId={run.id} from="agatha" {...ctx} /></div>
-      <div>
-        <p className="kicker text-tangelo mb-2">Alternative openings</p>
-        {(o.alternative_openings || []).map((x, i) => (
-          <div key={i} className={`p-3 mb-2 border ${i === o.preferred_opening ? "border-tangelo bg-tangelo/10" : "border-chocolate/30"}`}>
-            {i === o.preferred_opening && <Tag tone="solid" className="mb-2">AGATHA prefers</Tag>}
-            <p className="font-mono text-sm">{x.text}</p><p className="font-mono text-[11px] italic text-chocolate/70 mt-1"><Claim text={x.why} /></p>
-          </div>
-        ))}
-      </div>
-      <div data-testid="agatha-relevant-posts">
-        <p className="kicker text-tangelo mb-2">Historical posts that informed this (click to inspect)</p>
-        {(o.relevant_posts || []).map((p) => <p key={p.post_id} className="font-mono text-xs mb-1.5"><PostChip id={p.post_id} /> <Claim text={p.why_relevant} /></p>)}
-      </div>
-      <Output data={{ performance_view: o.performance_view, what_remains_a_hypothesis: o.hypotheses, recommended_experiment: o.experiment }} />
+      <Output data={{ success_beyond_engagement: o.success_beyond_engagement, sample_and_limits: o.sample_and_limits, experiments: o.experiments }} />
     </div>
   );
 }
 
 function BerdineView({ o, run, ctx }) {
-  const [tab, setTab] = useState("minimal_edit");
   return (
     <div className="space-y-6">
       <p className="font-serifit italic text-xl leading-snug"><Claim text={o.headline} /></p>
       <Tag tone="blue">{o.voice_profile_note || "Inferred voice profile, no internal style guide supplied"}</Tag>
-      <Output data={{ what_sounds_right: o.what_works, inconsistent_with_voice: o.inconsistent_with_voice, unclear_or_jargon: o.unclear_or_jargon, audience_fit: o.audience_fit, cut: o.cut, keep: o.keep, uk_vs_us: o.uk_us_notes }} />
+      <Output data={{ assessment: o.assessment, sounds_human: o.sounds_human, sounds_like_company_copy: o.sounds_like_company_copy, customer_reference: o.customer_reference }} />
       <div><p className="kicker text-tangelo mb-2">Line edits</p><Suggestions edits={o.edits} runId={run.id} from="berdine" {...ctx} /></div>
-      <div>
-        <div className="flex flex-wrap gap-1 mb-2">{["minimal_edit", "stronger_rewrite", "unconventional_version"].map((k) => <button key={k} data-testid={`berdine-tab-${k}`} onClick={() => setTab(k)} className={`font-mono text-[10px] tracking-[0.14em] uppercase px-3 py-1.5 border ${tab === k ? "bg-chocolate text-linen border-chocolate" : "border-chocolate/40"}`}>{k.replace(/_/g, " ")}</button>)}</div>
-        <p className="font-mono text-sm whitespace-pre-wrap bg-linen border border-chocolate/30 p-4">{o[tab]}</p>
-        <button data-testid="berdine-use-version" onClick={() => ctx.loadText(o[tab], `BERDINE ${tab.replace(/_/g, " ")}`)} className="font-mono text-[10px] tracking-[0.14em] uppercase text-tangelo underline-grow mt-2">Load into editor (save to keep)</button>
-      </div>
-      <Output data={{ most_important_edits: o.most_important_edits, flag_for_diana: o.flag_for_diana }} />
+      <div><p className="kicker text-tangelo mb-2">Revised draft</p><p className="font-mono text-sm whitespace-pre-wrap bg-linen border border-chocolate/30 p-4">{o.revised_draft}</p>
+        <button data-testid="berdine-use-version" onClick={() => ctx.loadText(o.revised_draft, "BERDINE revised draft")} className="font-mono text-[10px] tracking-[0.14em] uppercase text-tangelo underline-grow mt-2">Load into editor (save to keep)</button></div>
+      <Output data={{ meaningful_edits_explained: o.meaningful_edits_explained, verify_before_publishing: o.verify_before_publishing }} />
     </div>
   );
 }
@@ -126,9 +110,69 @@ function SynthesisView({ o, run, ctx }) {
   return (
     <div className="space-y-6">
       <p className="font-serifit italic text-xl leading-snug"><Claim text={o.summary} /></p>
-      <Output data={{ agreements: o.agreements, conflicts: o.conflicts }} />
-      <div><p className="kicker text-tangelo mb-2">Recommended edits, accept or reject each</p><Suggestions edits={o.recommended_edits} runId={run.id} from="ana" {...ctx} /></div>
-      <Output data={{ outstanding_concerns: o.outstanding_concerns, next_step: o.next_step }} />
+      <div data-testid="ana-decisions"><p className="kicker text-botticelli mb-2">Two decisions for you</p>{(o.decisions_for_anushka || []).map((d, i) => <div key={i} className="border border-linen/30 p-3 mb-2 font-mono text-xs"><p className="font-bold mb-1"><Claim text={d.decision} /></p><p className="text-linen/70">{(d.options || []).join(" / ")}</p><p className="text-linen/60 italic mt-1"><Claim text={d.why_it_matters} /></p></div>)}</div>
+      <Output dark data={{ agreements: o.agreements, conflicts: o.conflicts, evidence_backed: o.evidence_backed, hypotheses_only: o.hypotheses_only, unknowns: o.unknowns }} />
+      <div className="bg-linen text-chocolate p-3"><p className="kicker text-tangelo mb-2">Edits ANA thinks are worth considering. You decide.</p><Suggestions edits={o.recommended_edits} runId={run.id} from="ana" {...ctx} /></div>
+    </div>
+  );
+}
+
+const DECISIONS = ["Keep as draft", "Change direction", "Ready for review with colleagues", "Approved by me", "Rejected"];
+
+function judgement(draft, reviewed) {
+  const d = draft.decision || {};
+  if (d.final) return ["Decision recorded", "green"];
+  if ((d.facts_to_check || "").trim()) return ["Fact check required", "solid"];
+  if (reviewed) return ["Needs your judgement", "blue"];
+  return ["Not reviewed yet", "line"];
+}
+
+function MyDecision({ draft, reviews, reload, cur }) {
+  const [d, setD] = useState(draft.decision || {});
+  useEffect(() => setD(draft.decision || {}), [draft.id]); // eslint-disable-line
+  const s = (k) => (e) => setD({ ...d, [k]: e.target.value });
+  const ag = reviews.ag?.output, be = reviews.be?.output;
+  const original = draft.versions[0].text;
+  const saveNotes = async () => { await update("drafts", draft.id, { decision: { ...d, saved_at: new Date().toISOString() } }); toast.success("Your notes are saved with the draft"); reload(); };
+  const record = async () => {
+    const entry = { final: d.final, reasoning: d.reasoning, on_version: cur.n, at: new Date().toISOString() };
+    const statusMap = { "Keep as draft": "draft", "Change direction": "draft", "Ready for review with colleagues": "in_review", "Approved by me": "approved", Rejected: "rejected" };
+    await update("drafts", draft.id, { decision: { ...d, history: [...(d.history || []), entry] }, status: statusMap[d.final] });
+    await recordDecision({ ref_type: "draft", ref_id: draft.id, choice: d.final, note: `${d.reasoning || ""} (v${cur.n})`, agree: d.agree, disagree: d.disagree, missed: d.missed, reflection: d.reflection });
+    toast.success(`Decision recorded on v${cur.n}`); reload();
+  };
+  const [label, tone] = judgement(draft, ag || be);
+  return (
+    <div className="border-2 border-tangelo bg-paper" data-testid="my-editorial-decision">
+      <div className="bg-tangelo text-linen px-5 py-3 flex flex-wrap justify-between items-center gap-2"><p className="font-display uppercase text-2xl">My editorial decision</p><Tag tone={tone} data-testid="judgement-status" className="!bg-linen !text-chocolate">{label}</Tag></div>
+      <div className="p-5 space-y-6">
+        <div className="grid md:grid-cols-2 gap-4">
+          <div><p className="kicker text-tangelo mb-2">Original (v1, as I wrote it)</p><p data-testid="decision-original" className="font-mono text-sm whitespace-pre-wrap border border-chocolate/30 p-4 bg-linen">{original}</p></div>
+          <div><p className="kicker text-tangelo mb-2">{be?.revised_draft ? "BERDINE's revision" : `Current v${cur.n}`}</p><p className="font-mono text-sm whitespace-pre-wrap border border-chocolate/30 p-4 bg-linen">{be?.revised_draft || cur.text}</p></div>
+        </div>
+        {(ag || be) && (
+          <div className="grid md:grid-cols-2 gap-4" data-testid="decision-agent-compare">
+            {[["AGATHA says", ag && [`Strongest: ${ag.strongest_idea}`, `Weakest: ${ag.biggest_weakness}`, `Confidence: ${ag.confidence}`]], ["BERDINE says", be && [be.headline, ...(be.sounds_like_company_copy || []).slice(0, 2).map((x) => `Company copy: ${x}`)]]].map(([t, xs]) => (
+              <div key={t} className="border border-chocolate/30 p-3"><p className="kicker text-tangelo mb-2">{t}</p>{xs ? xs.map((x, i) => <p key={i} className="font-mono text-xs mb-1"><Claim text={x} /></p>) : <Note>Not run yet.</Note>}</div>
+            ))}
+          </div>
+        )}
+        <div className="grid md:grid-cols-2 gap-3">
+          <Field label="What I agree with"><textarea data-testid="decision-agree" className="field" rows={3} value={d.agree || ""} onChange={s("agree")} /></Field>
+          <Field label="What I disagree with, and why"><textarea data-testid="decision-disagree" className="field" rows={3} value={d.disagree || ""} onChange={s("disagree")} /></Field>
+          <Field label="What the agents missed"><textarea data-testid="decision-missed" className="field" rows={3} value={d.missed || ""} onChange={s("missed")} /></Field>
+          <Field label="Facts to check (product, founders, customer-facing colleagues)"><textarea data-testid="decision-facts" className="field" rows={3} value={d.facts_to_check || ""} onChange={s("facts_to_check")} /></Field>
+          <div className="md:col-span-2"><Field label="What do I think matters here that the data alone cannot tell me?"><textarea data-testid="decision-reflection" className="field" rows={3} value={d.reflection || ""} onChange={s("reflection")} /></Field></div>
+        </div>
+        <Btn variant="line" data-testid="decision-save-notes" onClick={saveNotes}>Save my notes</Btn>
+        <div className="grid md:grid-cols-[260px_1fr_auto] gap-3 items-end border-t border-chocolate/30 pt-5">
+          <Field label="My decision"><select data-testid="decision-final" className="field" value={d.final || ""} onChange={s("final")}><option value="">Choose…</option>{DECISIONS.map((x) => <option key={x}>{x}</option>)}</select></Field>
+          <Field label="Reasoning"><input data-testid="decision-reasoning" className="field" value={d.reasoning || ""} onChange={s("reasoning")} /></Field>
+          <Btn variant="accent" data-testid="decision-record" disabled={!d.final || !(d.reasoning || "").trim()} onClick={record}>Record decision on v{cur.n}</Btn>
+        </div>
+        {(draft.decision?.history || []).length > 0 && <div data-testid="decision-history"><p className="kicker text-tangelo mb-1">Decision history</p>{draft.decision.history.slice().reverse().map((h, i) => <p key={i} className="font-mono text-xs py-1 border-b border-chocolate/15">{fmtDate(h.at)} · v{h.on_version} · <b>{h.final}</b> · {h.reasoning}</p>)}</div>}
+        <Note>Agents never approve or publish. Only this section changes the draft's status.</Note>
+      </div>
     </div>
   );
 }
@@ -279,8 +323,9 @@ export default function ContentDesk() {
                 <RunView agent="agatha" task="agatha.review" label="Performance review" hook={ag} version={cur.n} getInput={() => ({ format: draft.format, audience: draft.audience, objective: draft.objective, word_limit: draft.word_limit || "none supplied" })} render={(o, r) => <AgathaView o={o} run={r} ctx={ctx} />} />
                 <RunView agent="berdine" task="berdine.review" label="Editorial review" hook={be} version={cur.n} getInput={() => ({ format: draft.format, audience: draft.audience, objective: draft.objective, word_limit: draft.word_limit || "none supplied" })} render={(o, r) => <BerdineView o={o} run={r} ctx={ctx} />} />
               </div>
-              <RunView agent="ana" task="ana.synthesis" label="Synthesis" hook={syn} version={cur.n} hint={both ? "Both reviews exist. Ask ANA to synthesise them into one recommended edit list." : "Run AGATHA and BERDINE first, ANA only synthesises recorded reviews."} render={(o, r) => <SynthesisView o={o} run={r} ctx={ctx} />} />
+              <RunView dark agent="ana" task="ana.synthesis" label="Synthesis" hook={syn} version={cur.n} hint={both ? "Both reviews exist. Ask ANA to synthesise them into one recommended edit list." : "Run AGATHA and BERDINE first, ANA only synthesises recorded reviews."} render={(o, r) => <SynthesisView o={o} run={r} ctx={ctx} />} />
 
+              <MyDecision draft={draft} cur={cur} reload={load} reviews={{ ag: ag.latest, be: be.latest }} />
               <div className="border-2 border-chocolate p-5 bg-paper flex flex-wrap items-center justify-between gap-4" data-testid="apply-bar">
                 <p className="font-mono text-xs">{accepted.length} accepted · {rejected.length} rejected</p>
                 <Btn variant="accent" data-testid="apply-accepted-btn" disabled={!accepted.length || text !== cur.text} onClick={applyAccepted}>Apply accepted → save v{cur.n + 1}</Btn>

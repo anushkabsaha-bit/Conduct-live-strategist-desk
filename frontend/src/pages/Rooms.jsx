@@ -27,11 +27,13 @@ export const NARRATIVE = {
 };
 
 export const FOUNDER = {
-  key: "founder", n: "09", title: "Founder & Executive Comms", noun: "briefing", sub: "Useful material for a busy executive. Not a script, not words put in anyone's mouth.",
+  key: "founder", n: "09", title: "Founder & Executive Comms", noun: "briefing", sub: "I gather context, speak to the founder, find the strongest point of view, test it, edit it and agree the final version with them. The agents help with the legwork.",
   statuses: ["draft", "in review", "approved by speaker", "delivered"],
   fields: [
     { k: "speaker", label: "Speaker", ph: "e.g. Jan Philipp Haas (illustrative scenario only)" }, { k: "event", label: "Conference name" },
-    { k: "event_url", label: "Event URL (official)" }, { k: "audience", label: "Audience" },
+    { k: "event_url", label: "Event URL (optional, official)" }, { k: "audience", label: "Audience" },
+    { k: "scenario", label: "No URL? Choose an illustrative scenario", options: ["Enterprise transformation conference (CIOs, SAP leaders)", "Developer conference (engineers)", "Founder and investor stage", "Partner and consultant roundtable", "University / graduate talent event"] },
+    { k: "objective", label: "Objective" }, { k: "key_message", label: "Key message I think matters", rows: 2 }, { k: "sources", label: "Source material available", rows: 2 },
     { k: "topic", label: "Topic", rows: 3 }, { k: "session", label: "Session details available", rows: 3 },
     { k: "founder_notes", label: "Founder's own words (from a real conversation)", wide: true, rows: 3, ph: "Paste only what the founder actually said" },
   ],
@@ -40,7 +42,7 @@ export const FOUNDER = {
     audience: "SAP developers, architects, enterprise IT leaders", topic: "Why complex system dependencies matter in enterprise software transformation, how business and technical teams build a shared understanding, and where AI can help.", session: "Not supplied." } },
   steps: [
     { agent: "catherine", task: "catherine.event_audience", label: "Audience & event research", hint: "Uses only the supplied event details and URL. No live browsing; unverified items are listed to check." },
-    { agent: "edith", task: "edith.founder_messages", label: "Three messages, examples & claims to verify" },
+    { agent: "edith", task: "edith.founder_messages", label: "Three approaches: big idea, practical story, challenging question" },
     { agent: "berdine", task: "berdine.founder_language", label: "Develop the language" },
     { agent: "ana", task: "ana.speaker_briefing", label: "Consolidated speaker briefing" },
     { agent: "edith", task: "edith.founder_conversation", label: "Five-minute founder conversation" },

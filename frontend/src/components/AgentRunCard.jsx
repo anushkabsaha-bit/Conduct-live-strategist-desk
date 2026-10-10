@@ -44,6 +44,7 @@ export function RunView({ agent, task, label, getInput, render, dark, hint, test
             {stale && <span className="text-tangelo">· draft has changed since, re-run</span>}
           </p>
           {render ? render(shown.output, shown) : <Output data={shown.output} dark={dark} />}
+          {shown.received && <details className="mt-5" data-testid={`run-received-${tid}`}><summary className={`kicker cursor-pointer ${dark ? "text-botticelli" : "text-tangelo"}`}>What {AGENTS[agent].name} actually received</summary><pre className="whitespace-pre-wrap font-mono text-[10px] mt-2 max-h-72 overflow-auto opacity-80">{shown.received}</pre></details>}
         </div>
       ) : !running && <Note>{hint || "Not run yet. Nothing here is a completed analysis until you press Run."}</Note>}
     </div>

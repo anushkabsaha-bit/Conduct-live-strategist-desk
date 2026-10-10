@@ -78,8 +78,28 @@ That is the problem Conduct is exploring with Freudenberg: a capability designed
 What breaks first in your organisation when the map stops matching the territory?"""
 
 
+FREUD_DOC = """Enterprise software has a documentation problem.
+
+The way a business works changes over time. Its processes evolve, its systems become more customised, and the documentation that describes them can struggle to keep up.
+
+That matters because understanding how a system actually works is a big part of being able to change it safely.
+
+At Conduct, we’re exploring how AI can help connect technical systems, business processes and organisational knowledge, including through work with colleagues from Freudenberg Group on keeping SAP process documentation accurate and connected to reality.
+
+The interesting question isn’t just how to document a system. It’s how to keep that understanding useful as the business changes.
+
+That’s a problem worth working on."""
+FREUD_URL = "https://www.linkedin.com/posts/conduct-ai_were-working-on-a-brand-new-feature-at-conduct-activity-7498006623475445762-LvUs"
+
+
 def drafts():
-    return [{"id": _id(), "title": "The wrongness of a perfectly written document", "format": "LinkedIn post", "audience": "Enterprise / CIO / IT leadership",
+    return [{"id": _id(), "title": "Enterprise software has a documentation problem", "format": "LinkedIn post", "audience": "Enterprise technology leaders and SAP practitioners",
+             "objective": "Explain why outdated process documentation matters and connect that problem to Conduct's publicly described work.", "word_limit": None, "status": "draft",
+             "provenance": "Unapproved draft by Anushka, based on Conduct's public Freudenberg collaboration post. Independent portfolio work, not Conduct copy.",
+             "brief": {"subject": "Keeping SAP process documentation connected to reality (Freudenberg collaboration)", "channel": "LinkedIn (company)", "coverage": "First time covering this",
+                       "source_material": "Source: Conduct's public Freudenberg collaboration post " + FREUD_URL, "source_url": FREUD_URL,
+                       "editorial_intention": "Explain a meaningful problem before trying to sell a solution.", "tone": "Clear, curious, conversational and specific. No corporate fog, exaggerated claims or generic AI language."},
+             "versions": [{"n": 1, "text": FREUD_DOC, "note": "Original draft (Anushka)", "source": "user", "created_at": now()}], "created_at": now(), "updated_at": now()},{"id": _id(), "title": "The wrongness of a perfectly written document", "format": "LinkedIn post", "audience": "Enterprise / CIO / IT leadership",
              "objective": "Make the problem felt", "word_limit": None, "status": "in_review", "related_story": "",
              "provenance": "Anushka's first draft from the portfolio site, not official Conduct copy; based only on publicly available information.",
              "versions": [{"n": 1, "text": FREUD_DRAFT, "note": "Original draft", "source": "user", "created_at": now()}],
