@@ -31,6 +31,17 @@ Interactive AI-powered working desk demonstrating how Anushka Saha would run the
 - Source Library: prompts, posts table, Growth OS, architecture, public sources/research, drafts/projects/decisions
 - Tested: iteration_1 backend 25/25, frontend flows pass; Scenario A verified end to end
 
+## Iteration 2 (corrective build, 2026-10-10)
+- Shell: collapsible left sidebar (13 rooms), top bar with current room, global search (/api/search), open-task count, mobile drawer
+- New rooms via generic workspace engine (`workspaces` collection, Room.jsx + Rooms.jsx config): Narrative Room, Founder & Exec Comms (incl. 5-minute founder conversation), Integrated Launch (user-set statuses Planning→Completed), People & Culture, Reputation & Media, Impact & Learning. Each: worked example (labelled interpretation/illustrative/hypothetical), editable fields, chained agent steps with shared context, export (.md), handoffs with persistent context panel, make task
+- Content Desk stages A–D + One idea, different formats (EDITH direction, AGATHA evidence patterns incl. hook-length as hypothesis, BERDINE write/adapt/editorial note), export, save adapted draft as separate draft
+- Stories: Freudenberg public LinkedIn source, verified fact, handoff to Content Desk / Launch
+- Radar: 3-pane (saved lists, results, detail) + CATHERINE → DIANA → CATHERINE constraints → ANA next steps
+- Daily Desk: day/week calendar, top-5 priorities with status
+- Reliability: max_tokens 8000, auto-retry once on malformed JSON, server-side em-dash sanitising, indexes
+- AGATHA receives results recorded in Impact & Learning
+- Tested: iteration_2 + iteration_3 (backend 25/25, frontend in-scope 100%)
+
 ## Backlog
 - P0: Live research integration (Perplexity/Tavily) for CATHERINE with source + date checked capture
 - P1: File upload/ingestion via object storage with processing status; drag-and-drop calendar moves; Google Calendar sync
