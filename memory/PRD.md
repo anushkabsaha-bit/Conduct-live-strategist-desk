@@ -63,3 +63,13 @@ Interactive AI-powered working desk demonstrating how Anushka Saha would run the
 - LIVE research: Anthropic web_search server tool via Emergent key for catherine.live_research and catherine.event_audience; results carry source URL, official/secondary flag, dates and deadline separately, unknowns; save to radar with verification live_official/live_secondary
 - Tested iteration_5: 6/6. Test data reset afterwards (Freudenberg draft back to v1, no decision)
 - Known limit: live search tends to return aggregator (secondary) sources; official-site verification remains manual
+
+## Iteration 5 (Launch Strategy, additive, 2026-10-11)
+- Backup before changes: mongodump at /app/backups/pre_strategy_*; git checkpoint 976bd66
+- New Core nav item "Launch Strategy" (/strategy) with tabs: Overview, /strategy/narrative, /score (full screen, outside shell), /strategy/measure
+- backend/strategy.py: seeded once (meta k=strategy_seeded) into `strategy` collection (narrative, score_config, measure) + 3 drafts (series=launch_narrative) in `drafts`, so they're reviewable in Content Desk with AGATHA/BERDINE. Existing records untouched
+- Narrative: labelled core narrative + sources S1-S4 (S1 LinkedIn could not be fetched automatically, flagged), 3 audiences + priority choice, 3 drafts editable/versioned with line-by-line evidence panel + claim checks, compare + preferred direction, questions for Conduct
+- SAP Score: 3 questions, deterministic points, 4 bands (Growth OS lines), polaroid result card, copy (image/text), PNG download (html-to-image), restart; anonymous counts via /api/score/events, /api/score/stats (labelled prototype test data), DELETE to clear
+- Measure: hypothesis picker, 9 metrics/6 areas, thresholds as planning assumptions, lock before launch, actuals (autosave on blur) vs assumption, Continue/Change/Stop history, failure analysis + notes
+- Decisions log to `decisions` (ref_type strategy, label) -> Daily Desk; Conduct questions -> Daily Desk outstanding questions; Campaign Studio SAP Score links to /strategy
+- Tested iteration_6: backend 6/6, frontend all flows pass; 2 minor fixes applied (actual autosave, option warning). Test data reset to seed

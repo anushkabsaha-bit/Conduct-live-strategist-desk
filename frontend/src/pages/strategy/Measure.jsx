@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { ArrowRight, ChevronDown, Lock, Unlock, Trash2 } from "lucide-react";
@@ -69,7 +69,7 @@ function Hypothesis({ doc, save }) {
   );
 }
 
-function MetricRow({ m, set, locked }) {
+function MetricRow({ m, set, locked, commit }) {
   const [open, setOpen] = useState(false);
   const cmp = compare(m);
   return (
@@ -79,16 +79,16 @@ function MetricRow({ m, set, locked }) {
           <ChevronDown className={`w-3.5 h-3.5 mt-0.5 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
           <span><span className="font-mono text-sm font-bold group-hover:text-tangelo">{m.name}</span><span className="block font-mono text-[9px] uppercase tracking-[0.12em] opacity-60 mt-0.5">{TRACK[m.tracking]}</span></span>
         </button>
-        <input data-testid={`threshold-${m.id}`} disabled={locked} className="field !py-1.5 !text-xs disabled:opacity-60" placeholder="Planning assumption, e.g. 40%" value={m.threshold} onChange={(e) => set({ threshold: e.target.value })} />
-        <input data-testid={`actual-${m.id}`} className="field !py-1.5 !text-xs" placeholder={locked ? "Actual result" : "Lock assumptions first"} disabled={!locked} value={m.actual} onChange={(e) => set({ actual: e.target.value, actual_at: new Date().toISOString() })} />
+        <input data-testid={`threshold-${m.id}`} disabled={locked} className="field !py-1.5 !text-xs disabled:opacity-60" placeholder="Planning assumption, e.g. 40%" value={m.threshold} onChange={(e) => set({ threshold: e.target.value })} onBlur={commit} />
+        <input data-testid={`actual-${m.id}`} className="field !py-1.5 !text-xs" placeholder={locked ? "Actual result" : "Lock assumptions first"} disabled={!locked} value={m.actual} onChange={(e) => set({ actual: e.target.value, actual_at: new Date().toISOString() })} onBlur={commit} />
         <p className={`font-mono text-[11px] pt-1.5 ${cmp.c}`} data-testid={`compare-${m.id}`}>{cmp.t}</p>
       </div>
       {open && (
         <div className="grid md:grid-cols-5 gap-4 pb-4 pl-6 animate-rise font-mono text-[11px] leading-relaxed">
           {[["Why it matters", m.why], ["How it's measured", m.how], ["Baseline needed", m.baseline], ["Signals", `Positive: ${m.positive}\nNegative: ${m.negative}`], ["Decision that could follow", m.decision]].map(([l, v]) => <div key={l}><p className="kicker text-tangelo mb-1">{l}</p><p className="whitespace-pre-line">{v}</p></div>)}
           <div className="md:col-span-5 grid md:grid-cols-2 gap-3">
-            <input data-testid={`threshold-note-${m.id}`} disabled={locked} className="field !py-1.5 !text-xs" placeholder="Why this assumption?" value={m.threshold_note} onChange={(e) => set({ threshold_note: e.target.value })} />
-            <input data-testid={`actual-note-${m.id}`} disabled={!locked} className="field !py-1.5 !text-xs" placeholder="Where the result came from" value={m.actual_note} onChange={(e) => set({ actual_note: e.target.value })} />
+            <input data-testid={`threshold-note-${m.id}`} disabled={locked} className="field !py-1.5 !text-xs" placeholder="Why this assumption?" value={m.threshold_note} onChange={(e) => set({ threshold_note: e.target.value })} onBlur={commit} />
+            <input data-testid={`actual-note-${m.id}`} disabled={!locked} className="field !py-1.5 !text-xs" placeholder="Where the result came from" value={m.actual_note} onChange={(e) => set({ actual_note: e.target.value })} onBlur={commit} />
           </div>
         </div>
       )}
@@ -101,6 +101,9 @@ function Metrics({ doc, save }) {
   const [busy, setBusy] = useState(false);
   useEffect(() => setMs(doc.metrics), [doc.metrics]);
   const dirty = JSON.stringify(ms) !== JSON.stringify(doc.metrics);
+  const latest = useRef(ms);
+  latest.current = ms;
+  const commit = () => setTimeout(() => { if (JSON.stringify(latest.current) !== JSON.stringify(doc.metrics)) save("measure", { metrics: latest.current }).catch(() => toast.error("Could not save. Your edits are still here.")); }, 0);
   const locked = !!doc.locked_at;
   const persist = async () => { setBusy(true); try { await save("measure", { metrics: ms }); toast.success("Plan saved"); } catch { toast.error("Could not save. Your edits are still here."); } finally { setBusy(false); } };
   const lock = async () => {
@@ -115,13 +118,13 @@ function Metrics({ doc, save }) {
     <div data-testid="metrics-plan">
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <span className={`font-mono text-[10px] uppercase tracking-[0.14em] px-2 py-1 ${locked ? "bg-chocolate text-linen" : "border border-chocolate"}`} data-testid="plan-status">{locked ? `Assumptions locked ${fmtDate(doc.locked_at)}` : "Planning: thresholds are assumptions, not benchmarks"}</span>
-        <Btn data-testid="save-plan" onClick={persist} loading={busy} disabled={!dirty}>Save plan</Btn>
+        <Btn data-testid="save-plan" onClick={persist} loading={busy} disabled={!dirty}>{dirty ? "Save plan" : "Saved"}</Btn>
         <Btn data-testid="lock-plan" variant="line" onClick={lock}>{locked ? <><Unlock className="w-3.5 h-3.5" />Unlock to revise</> : <><Lock className="w-3.5 h-3.5" />Lock before launch</>}</Btn>
       </div>
       <div className="hidden md:grid grid-cols-[1.3fr_1fr_1fr_1fr] gap-3 kicker opacity-60 pb-2 border-b-2 border-chocolate"><span>Metric</span><span>Proposed threshold</span><span>Actual result</span><span>Against assumption</span></div>
       {areas.map((a) => (
         <div key={a}><p className="font-display uppercase text-xl pt-5 pb-1">{a}</p>
-          {ms.map((m, i) => m.area === a && <MetricRow key={m.id} m={m} locked={locked} set={(p) => setMs(ms.map((x, j) => (j === i ? { ...x, ...p } : x)))} />)}
+          {ms.map((m, i) => m.area === a && <MetricRow key={m.id} m={m} locked={locked} commit={commit} set={(p) => setMs(ms.map((x, j) => (j === i ? { ...x, ...p } : x)))} />)}
         </div>
       ))}
     </div>

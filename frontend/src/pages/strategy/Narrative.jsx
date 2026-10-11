@@ -121,7 +121,7 @@ function Editor({ draft, onSaved }) {
       <div className="flex flex-wrap items-center gap-3 mb-3">
         <span className="font-mono text-[9px] tracking-[0.14em] uppercase bg-tangelo text-linen px-1.5 py-0.5">Proposed · unapproved portfolio draft</span>
         <select data-testid="draft-version-select" className="field !w-auto !py-1 !text-[11px]" value={vi} onChange={(e) => { setVi(+e.target.value); setText(draft.versions[+e.target.value].text); }}>
-          {draft.versions.map((v, i) => <option key={i} value={i}>v{v.n} · {v.note} · {fmtDate(v.created_at)}</option>)}
+          {draft.versions.map((v, i) => <option key={i} value={i}>{`v${v.n} · ${v.note} · ${fmtDate(v.created_at)}`}</option>)}
         </select>
         <span className="font-mono text-[10px] opacity-60">{words(text)} words</span>
       </div>

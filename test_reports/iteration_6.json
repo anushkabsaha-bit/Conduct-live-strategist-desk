@@ -1,0 +1,38 @@
+{
+  "summary": "Iter6 end-to-end verification of the Launch Strategy additions. All backend (6/6 pytest) and frontend (sidebar, /strategy overview chain, /strategy/narrative audience tabs + priority audience persistence, draft edit saves new version keeping v1, claim-check persists, compare + prefer save, add/remove questions, /score deterministic scores for 0,0,0=>100 'You may actually know what's going on', 1,1,1=>52 'Tribal knowledge economy', 3,3,3=>7 'Held together by thoughts and prayers', 2,2,2=>24 same band, 0,1,0=>84; score-restart + score-back-to-workspace work; mobile 390px renders usably; /strategy/measure prototype-stats reflected starts and completions after /score runs; hypothesis save, threshold editable while unlocked (actuals disabled), lock-plan flips enablement, compare shows 'Meets assumption (55 vs 40)', decision + reasoning + 'before results' label works, failure-notes save) checks pass. Daily Desk my-questions correctly shows 'Question for Conduct · Launch strategy' entries; my-decisions renders new strategy decisions (SAP Score · campaign decision/measurement plan/campaign hypothesis, Launch narrative · preferred direction/priority audience). No em dash characters in any strategy source files or backend seed. Cleanup per request completed: /api/score/events DELETE returned 19; narrative + measure + 3 launch drafts reset to seed state; 5 strategy decisions deleted.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "Measure plan actuals vs decision 'before results' label", "issue": "The Decide panel reads doc.metrics (persisted). When user types an actual value in the Metrics table, it only updates local Metrics state; it is persisted only when user clicks save-plan. If the user locks, types an actual, then jumps to decision without clicking save-plan, the compare chip updates correctly but the decision is still labelled 'before results' because doc.metrics.actual is empty. UX: consider auto-saving actual onBlur, or disabling the decision area until save-plan is clicked when there are unsaved actuals.", "affected_selectors": ["actual-starts", "save-plan", "decision-continue"]}
+    ],
+    "design_issues": [
+      {"screen": "Narrative drafts editor", "issues": ["React console warning: '<span> cannot be a child of <option>' in draft-version-select (StrategyKit/Narrative Editor). It is a React hydration warning only, not visible to the user, but should be fixed by moving the 'v{n} · note · date' pieces out of a <span> inside <option> or just using plain string content."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_strategy_iter6.py",
+    "/app/test_reports/pytest/iter6.xml"
+  ],
+  "action_items": [
+    "Minor: Metrics component should auto-save actuals (onBlur) or warn before letting the user record a decision while actuals are unsaved. Right now typing an actual value updates compare chip locally but doc.metrics stays empty, so Decide shows 'before results' and the compare chip loses its value after reload.",
+    "Minor: Fix 'span cannot be a child of option' hydration warning in draft-version-select (Narrative Editor)."
+  ],
+  "critical_code_review_comments": [
+    "Measure.jsx: Metrics component holds `ms` local state; MetricRow mutates `ms` via `set(p)` but persistence only happens on explicit save-plan click. Decide reads doc.metrics for hasResults, so there's a visible gap between what the user has typed and what the system records. Consider lifting the save or auto-persisting on blur.",
+    "Narrative.jsx Editor: option elements wrap their content in a <span>; React logs a hydration warning. Use plain text in <option>.",
+    "No em dash scan on backend output is now gated by no_dash() in server.execute_run but strategy.py seeds are already clean. Still, a startup assertion could prevent accidental re-introduction.",
+    "strategy.py seed is idempotent (ensure() checks meta.k='strategy_seeded'). Good."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_strategy_iter6.py",
+    "/tmp/cleanup_iter6.py (cleanup script, not persisted in app)"
+  ],
+  "success_rate": {"backend": "100% (6/6 pytest)", "frontend": "100% (all listed features)"},
+  "test_credentials": "None (no auth).",
+  "seed_data_creation": "After cleanup: score_events empty; narrative priority_audience/priority_reason/preferred_draft/preferred_reason/claim_checks cleared; narrative.questions restored to the 4 original seeds; measure hypothesis_id/custom/locked_at/decision_history/failure_notes cleared and all 9 metrics have empty threshold/actual/notes; 3 launch drafts reduced back to v1 only (text unchanged); 5 strategy-ref decisions deleted. Freudenberg and 'Wrongness' drafts and all other collections untouched.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All six feature areas pass end-to-end. Deterministic score mapping verified: q1 options points [32,18,8,2]; q2 [34,18,8,3]; q3 [34,16,8,2]; result bands 0-30/31-55/56-79/80-100 titles exactly as spec. useStrategy() in frontend/src/lib/strategy.js keeps narrative/score_config/measure keyed. In /strategy/narrative loading, 'core-narrative' only appears after drafts list resolves (ready = doc && drafts); allow 20s+. Minor UX issue in Measure: typing actuals updates compare chip locally but is not persisted until save-plan is clicked, which affects the 'before results' label on decisions. The hydration warning for <span> inside <option> is harmless but worth cleaning.",
+  "rca of the issue": "N/A - no bugs found. One UX concern on Metrics->Decide persistence is documented in action_items."
+}
