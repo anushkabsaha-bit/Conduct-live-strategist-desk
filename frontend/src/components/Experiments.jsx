@@ -11,14 +11,14 @@ const STAGE = { planning: "Planning", ready: "Ready to run", results: "Result re
 const DEC = [["continue", "Continue", "Evidence supports another iteration."], ["change", "Change", "Shows potential, but one part needs improving."], ["stop", "Stop", "Not enough relevant value to justify more effort."]];
 const blank = (hyp) => ({ id: `exp${Date.now()}`, name: "", is_test: false, hypothesis: hyp || "", audience: "", baseline: "", threshold: "", period: "", metric: "", source: "", change_my_mind: "", status: "planning", result: "", result_note: "", view_changed: "", decision: "", decision_reason: "", log: [] });
 
-function Verdict({ e }) {
+function Verdict({ e, i }) {
   const a = num(e.result), t = num(e.threshold);
   const v = a === null || t === null ? "Compare by hand: the threshold or result isn't a single number." : a >= t ? `Meets the planning threshold (${a} vs ${t}).` : `Below the planning threshold (${a} vs ${t}).`;
   return (
-    <div className="grid md:grid-cols-3 gap-0 border-2 border-chocolate" data-testid={`exp-compare-${e.id}`}>
+    <div className="grid md:grid-cols-3 gap-0 border-2 border-chocolate" data-testid={`exp-compare-${i}`}>
       <div className="p-3 md:border-r-2 border-chocolate"><p className="kicker text-tangelo mb-1">What I expected</p><p className="font-mono text-xs">{e.hypothesis}</p><p className="font-mono text-[11px] mt-1 opacity-70">Threshold: {e.threshold || "none set"}</p></div>
       <div className="p-3 md:border-r-2 border-chocolate"><p className="kicker text-tangelo mb-1">What happened</p><p className="font-mono text-xs">{e.result}</p><p className="font-mono text-[11px] mt-1 opacity-70">{e.result_note}</p></div>
-      <div className="p-3 bg-paper"><p className="kicker text-tangelo mb-1">Against the assumption</p><p className="font-mono text-xs" data-testid={`exp-verdict-${e.id}`}>{v}</p><p className="font-mono text-[11px] mt-1 opacity-70">What I said would change my mind: {e.change_my_mind}</p></div>
+      <div className="p-3 bg-paper"><p className="kicker text-tangelo mb-1">Against the assumption</p><p className="font-mono text-xs" data-testid={`exp-verdict-${i}`}>{v}</p><p className="font-mono text-[11px] mt-1 opacity-70">What I said would change my mind: {e.change_my_mind}</p></div>
     </div>
   );
 }
@@ -52,7 +52,7 @@ function Experiment({ e, i, persist, doc }) {
           <div className="flex gap-2"><Btn data-testid={`exp-record-${i}`} disabled={!x.result.trim()} onClick={() => commit({ status: "results", result_at: new Date().toISOString() }, "Result recorded", `Result recorded: ${x.result}`)}>Record result</Btn><Btn variant="line" data-testid={`exp-revise-${i}`} onClick={() => commit({ status: "planning" }, "Back to planning. This is logged.", "Plan reopened before results")}>Revise plan</Btn></div>
         </div>}
         {(x.status === "results" || x.status === "decided") && <div className="space-y-3 border-t-2 border-chocolate pt-4">
-          <Verdict e={x} />
+          <Verdict e={x} i={i} />
           <label className="block"><span className="kicker opacity-70">Did the evidence change my view? How?</span><textarea data-testid={`exp-view-${i}`} rows={2} className="field !text-xs mt-1" value={x.view_changed} onChange={s("view_changed")} /></label>
           <div className="grid md:grid-cols-3 gap-2">{DEC.map(([k, t, dsc]) => <button key={k} data-testid={`exp-decision-${k}-${i}`} onClick={() => setX({ ...x, decision: k })} className={`text-left p-3 border-2 transition-colors ${x.decision === k ? "bg-chocolate text-linen border-chocolate" : "border-chocolate/30 hover:border-chocolate"}`}><p className="font-display uppercase text-2xl leading-none">{t}</p><p className="font-mono text-[10px] mt-1">{dsc}</p></button>)}</div>
           <textarea data-testid={`exp-decision-reason-${i}`} rows={2} className="field !text-xs" placeholder="My reasoning" value={x.decision_reason} onChange={s("decision_reason")} />

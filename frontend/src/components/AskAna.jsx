@@ -22,7 +22,7 @@ function Continue({ o, run, title }) {
   const msg = run.input?.message || "";
   const go = async (where) => {
     const ctx = contextText(title, o, msg).slice(0, 4000);
-    const name = `${o.about || title}: ${o.directions?.[0]?.title || "story angle"}`.slice(0, 120);
+    const name = `${title}: ${o.directions?.[0]?.title || "story angle"}`.slice(0, 120);
     if (where === "content") {
       const d = await create("drafts", { title: name, format: "LinkedIn post", audience: "", objective: o.next_step?.why || "", word_limit: null, status: "draft", brief: { subject: name, source_material: ctx, ana_run: run.id }, versions: [{ n: 1, text: "", note: "Handed over from ANA", source: "handoff", created_at: new Date().toISOString() }] });
       nav(`/content?draft=${d.id}`);

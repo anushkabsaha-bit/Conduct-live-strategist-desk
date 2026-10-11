@@ -73,3 +73,13 @@ Interactive AI-powered working desk demonstrating how Anushka Saha would run the
 - Measure: hypothesis picker, 9 metrics/6 areas, thresholds as planning assumptions, lock before launch, actuals (autosave on blur) vs assumption, Continue/Change/Stop history, failure analysis + notes
 - Decisions log to `decisions` (ref_type strategy, label) -> Daily Desk; Conduct questions -> Daily Desk outstanding questions; Campaign Studio SAP Score links to /strategy
 - Tested iteration_6: backend 6/6, frontend all flows pass; 2 minor fixes applied (actual autosave, option warning). Test data reset to seed
+
+## Iteration 6 (Show the work, additive, 2026-10-11)
+- Backup: /app/backups/pre_showwork_*. Routes: "/" = Home (intro + 4 entries), Daily Desk moved to /desk. Sidebar: "Show the work" (Start, The writing, The customer story, SAP Score, Campaign brief, Did it work?) + collapsible "How I Work" (all 14 earlier rooms)
+- /writing showcase; Content Desk: new draft "The decision someone made three years ago" (flags: illustrative/verified/interpretation), Freudenberg opening choice panel (original/alternative/own, saved as new version, v1 intact), "Why I chose the final angle" field; selected draft synced to URL ?draft=
+- /strategy/film (film concept: question, angle, outline, interviews for 3 roles with answer/evidence/permission/approval, story-change branches, production idea/confirmed)
+- /strategy/brief (10 editable fields, challenges, alternatives + required reason, logs decision)
+- Measure: Experiments (change-my-mind required before ready; result vs threshold; decision + "did evidence change my view"; test-entry label) + 3 illustrative scenarios
+- SAP Score: user's 3 questions x 3 options active; previous set kept in score_config.earlier_versions
+- Ask ANA (task ana.ask, original ANA prompt + record/CATHERINE context) in Radar opportunity and Narrative page; Continue in Narrative/Campaign/Content hands over context
+- Tested: iteration_7 (two runs) all passing; test artefacts cleaned. Launch draft 3 has a v2 "Manual edit" made before this session (assumed user's), left untouched

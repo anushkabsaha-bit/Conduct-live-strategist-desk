@@ -1,0 +1,29 @@
+{
+  "summary": "Iter8 end-to-end frontend verification of iter7 refinements. Content Desk URL sync (?draft=id) works: selecting 'Enterprise software has a documentation problem' updates URL, decision-angle + decision-reflection persist after reload, same draft is auto-selected. Opening alternative choice persists (opening-saved visible after reload, new v2 version created, v1 intact). /strategy/film: film-question, film-angle-reason, outline-notes-context, ia-freudenberg-0, ip-freudenberg-0 (granted), branch-status-0 (supported by answers), prod-status-0 (Confirmed resource), iq-add-conduct_product all save and persist after reload; film-save bar + film-save-btn appear when dirty; film-unanswered count correctly decremented from 13 to 12 when an answer is filled. /strategy/brief: brief-objective edit, new-challenge + add-challenge + challenge-response, alt-choose-drift with empty alt-reason triggers error toast ('Explain why you chose this direction before saving.'), filling alt-reason then brief-save-btn persists; /desk shows 'Concept:' decision from Brief save. /strategy/measure experiments: add-experiment, exp-name-0, exp-is-test-0 (exp-test-label-0 shows), exp-hypothesis-0, exp-threshold-0 (40%), exp-ready-0 correctly disabled until exp-change-mind-0 filled, mark ready → exp-status-0 'Ready to run', plan textareas disabled; exp-result-0 (31%), exp-record-0 → verdict 'Below the planning threshold (31 vs 40).' Then exp-decide-0 is disabled until decision+reason+view filled; record → status 'Decided: change' and persists on reload; exp-log-0 contains entries; scenarios section has children for the 3 scenario items. Ask ANA on /radar: typed query into ask-ana-input, clicked run-btn-ask-ana, received real LLM reply within ~90s (ana-reply, ana-directions, ana-continue all render); ana-continue-narrative navigated to /narrative?id=... and showed 'From ANA' context; ana-continue-campaign on second run navigated to /campaigns?id=... with campaign-context-panel visible. Regression: '/', /desk, /content, nav-more-toggle all work; /desk reflects decisions created during the run. CLEANUP COMPLETED per spec: Freudenberg versions back to v1 only, opening_alternatives choice/reason/decided_at/own_text cleared, decision = {}; measure.experiments = []; film + brief seeded fields reverted (question/angle_reason/interviews/story_changes/production/outline/fields/challenges/alternatives/chosen/choice_reason); 1 ANA-created workspace deleted ('Outsider test: did people understand Conduct?'); 1 ANA-created campaign deleted (London Tech Week 2026 (record ...)); no ANA-created drafts (continue-content not exercised); 4 decisions from this run deleted; /api/score/events deleted (0 events, none had been created in this run); Launch draft 3 v1+v2 Manual edit preserved.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Experiments.jsx", "issues": ["Inconsistent testid keying: exp-compare and exp-verdict use the experiment's e.id (uuid like 'exp1739...'), while every other exp-* testid in the same component uses the integer index (e.g. exp-name-0, exp-status-0, exp-ready-0). This breaks automated testing that targets exp-verdict-0 or exp-compare-0. Suggest changing to exp-compare-${i} / exp-verdict-${i} for consistency with the task spec and the rest of the component."]}
+    ]
+  },
+  "test_report_links": ["/tmp/cleanup_iter8.py"],
+  "action_items": [
+    "Minor: Normalise Experiments.jsx testids. exp-compare-${e.id} and exp-verdict-${e.id} should use the integer index ${i} to match exp-name-${i}, exp-status-${i} and the testing spec which asks for exp-verdict-0 / exp-compare-0."
+  ],
+  "critical_code_review_comments": [
+    "ContentDesk URL sync via useSearchParams on line 239-242 is correctly idempotent (replace: true) and only runs when id changes; good.",
+    "AskAna Continue component correctly builds a bounded context string (4000 chars) and includes the ANA run id in the created record for traceability.",
+    "Experiments.jsx testid inconsistency noted above - cosmetic but breaks the testing contract.",
+    "useLocalDoc dirty detection via JSON.stringify works but is O(n) per render; fine at current doc sizes."
+  ],
+  "updated_files": ["/tmp/cleanup_iter8.py", "/app/test_reports/iteration_7.json"],
+  "success_rate": {"backend": "n/a (frontend-only)", "frontend": "100% (6/6 feature areas: Content Desk URL sync + opening + decision; Film; Brief; Measure Experiments; Ask ANA real LLM continue→narrative + continue→campaign; Regression)"},
+  "test_credentials": "None (no auth).",
+  "seed_data_creation": "N/A - cleanup restored all docs to seed state.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All iter7 feature areas verified end-to-end. One cosmetic inconsistency: Experiments.jsx uses e.id in exp-compare/exp-verdict testids while every sibling exp-* uses the integer index. If a future spec needs exp-verdict-0, change these two lines (Experiments.jsx L18 and L21). Content Desk URL sync is solid: setParams({draft: id}, {replace: true}) triggered only when id changes. Ask ANA real-LLM response arrived in ~90s against the first opp (London Tech Week 2026). Cleanup script at /tmp/cleanup_iter8.py reused the ST.FILM/ST.BRIEF constants directly from backend/strategy.py to revert field-by-field; it preserves series='launch_narrative' drafts and the Freudenberg + three-years + wrongness drafts.",
+  "rca of the issue": "N/A. One tiny test-affordance mismatch (verdict/compare testids keyed by UUID rather than index) flagged for cleanup."
+}
