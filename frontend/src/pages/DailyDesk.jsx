@@ -76,11 +76,12 @@ function Briefing({ o, nav }) {
   );
 }
 
-function MyDesk({ decisions, drafts, stories, open, tasks }) {
-  const name = (d) => drafts.find((x) => x.id === d.ref_id)?.title || stories.find((x) => x.id === d.ref_id)?.title || d.ref_type;
+function MyDesk({ strat = [], decisions, drafts, stories, open, tasks }) {
+  const name = (d) => d.label || drafts.find((x) => x.id === d.ref_id)?.title || stories.find((x) => x.id === d.ref_id)?.title || d.ref_type;
   const editorial = decisions.filter((d) => !String(d.choice).startsWith("status:")).slice(0, 6);
   const questions = [
     ...drafts.filter((d) => (d.decision?.facts_to_check || "").trim()).map((d) => ({ k: d.id, t: d.decision.facts_to_check, w: `Fact check · ${d.title}`, to: `/content?draft=${d.id}` })),
+    ...(strat.find((x) => x.key === "narrative")?.questions || []).slice(0, 3).map((q, i) => ({ k: "sq" + i, t: q, w: "Question for Conduct · Launch strategy", to: "/strategy/narrative#questions" })),
     ...stories.flatMap((s) => (s.open_questions || []).slice(0, 2).map((q, i) => ({ k: s.id + i, t: q, w: `Story · ${s.title}`, to: "/stories" }))),
   ].slice(0, 7);
   const undecided = drafts.filter((d) => !d.decision?.final && d.versions?.[0]?.text);
@@ -147,9 +148,10 @@ export default function DailyDesk() {
   const [stories, setStories] = useState([]);
   const [projects, setProjects] = useState([]);
   const [decisions, setDecisions] = useState([]);
+  const [strat, setStrat] = useState([]);
   const [sel, setSel] = useState(null);
   const load = useCallback(() => {
-    list("calendar").then(setBlocks); list("tasks").then(setTasks); list("drafts").then(setDrafts); list("stories").then(setStories); list("projects").then(setProjects); list("decisions").then(setDecisions);
+    list("calendar").then(setBlocks); list("tasks").then(setTasks); list("drafts").then(setDrafts); list("stories").then(setStories); list("projects").then(setProjects); list("decisions").then(setDecisions); list("strategy").then(setStrat).catch(() => {});
   }, []);
   useEffect(load, [load]);
   const today = todayISO();
@@ -181,7 +183,7 @@ export default function DailyDesk() {
         <p className="font-hand text-xl text-chocolate/70 mt-6 -rotate-1">calendar blocks & tasks here are illustrative, not booked Conduct meetings.</p>
       </section>
 
-      <MyDesk decisions={decisions} drafts={drafts} stories={stories} open={open} tasks={tasks} />
+      <MyDesk strat={strat} decisions={decisions} drafts={drafts} stories={stories} open={open} tasks={tasks} />
       <section className="bg-chocolate text-linen px-5 md:px-10 py-14 md:py-20">
         <Kicker n="B" dark>Supporting view · ANA's briefing from saved tasks and project state (runs only when you ask)</Kicker>
         <AgentRunCard dark agent="ana" task="ana.briefing" label="Daily briefing" testid="ana-briefing"

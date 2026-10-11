@@ -16,6 +16,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 import agents as A
 import seed as S
+import strategy as ST
 from dataset import POSTS, dataset_summary
 
 client = AsyncIOMotorClient(os.environ["MONGO_URL"])
@@ -24,7 +25,7 @@ app = FastAPI(title="Conduct Communications Strategist Desk")
 api = APIRouter(prefix="/api")
 log = logging.getLogger("desk")
 
-COLLS = {"calendar", "tasks", "drafts", "stories", "campaigns", "opportunities", "sources", "decisions", "projects", "handoffs", "workspaces"}
+COLLS = {"calendar", "tasks", "drafts", "stories", "campaigns", "opportunities", "sources", "decisions", "projects", "handoffs", "workspaces", "strategy"}
 REF_COLL = {"draft": "drafts", "story": "stories", "campaign": "campaigns", "opportunity": "opportunities", "project": "projects", "block": "calendar", "task": "tasks", "workspace": "workspaces"}
 NOPROJ = {"_id": 0}
 
@@ -45,6 +46,7 @@ async def startup():
     await db.runs.create_index([("ref_type", 1), ("ref_id", 1), ("task", 1)])
     await db.messages.create_index([("agent", 1), ("created_at", 1)])
     if await db.meta.find_one({"k": "seeded"}):
+        await ST.ensure(db)
         return
     monday = S.week_monday()
     await db.calendar.insert_many(S.calendar_blocks(monday))
@@ -56,6 +58,7 @@ async def startup():
     lens = {a: len(A.original_prompt(a)) for a in A.AGENTS}
     await db.sources.insert_many(S.sources(lens, len(POSTS)))
     await db.meta.insert_one({"k": "seeded", "at": now()})
+    await ST.ensure(db)
 
 
 @api.get("/")
@@ -130,6 +133,37 @@ async def search(q: str):
         for d in await db[coll].find({f: rx}, {"_id": 0, "id": 1, f: 1, "room": 1}).to_list(8):
             out.append({"coll": coll, "id": d["id"], "label": d[f], "room": d.get("room")})
     return out
+
+
+# ---------- SAP Score prototype: anonymous counts only ----------
+SCORE_EVENTS = {"start", "complete", "copy", "download", "restart"}
+
+
+@api.post("/score/events")
+async def score_event(body: dict = Body(...)):
+    if body.get("type") not in SCORE_EVENTS:
+        raise HTTPException(400, "Unknown event")
+    ev = {"id": str(uuid.uuid4()), "type": body["type"], "result": str(body.get("result") or "")[:80], "created_at": now()}
+    await db.score_events.insert_one(dict(ev))
+    return ev
+
+
+@api.get("/score/stats")
+async def score_stats():
+    counts = {t: await db.score_events.count_documents({"type": t}) for t in SCORE_EVENTS}
+    by_result = {}
+    async for e in db.score_events.find({"type": "complete"}, NOPROJ):
+        by_result[e["result"]] = by_result.get(e["result"], 0) + 1
+    first = await db.score_events.find_one({}, NOPROJ, sort=[("created_at", 1)])
+    return {**counts, "shares": counts["copy"] + counts["download"],
+            "completion_rate": round(counts["complete"] / counts["start"] * 100, 1) if counts["start"] else None,
+            "by_result": by_result, "since": first["created_at"] if first else None, "label": "Prototype test data"}
+
+
+@api.delete("/score/events")
+async def clear_score_events():
+    r = await db.score_events.delete_many({})
+    return {"deleted": r.deleted_count}
 
 
 # ---------- dataset & agents ----------

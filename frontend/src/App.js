@@ -11,6 +11,10 @@ import Campaigns from "./pages/Campaigns";
 import Radar from "./pages/Radar";
 import AgentRoom from "./pages/AgentRoom";
 import Library from "./pages/Library";
+import StrategyOverview from "./pages/strategy/Overview";
+import NarrativePage from "./pages/strategy/Narrative";
+import MeasurePage from "./pages/strategy/Measure";
+import ScorePage from "./pages/strategy/Score";
 import { NarrativeRoom, FounderRoom, LaunchRoom, PeopleRoom, MediaRoom, ImpactRoom } from "./pages/Rooms";
 
 export default function App() {
@@ -32,7 +36,11 @@ export default function App() {
             <Route path="/people" element={<PeopleRoom />} />
             <Route path="/media" element={<MediaRoom />} />
             <Route path="/impact" element={<ImpactRoom />} />
+            <Route path="/strategy" element={<StrategyOverview />} />
+            <Route path="/strategy/narrative" element={<NarrativePage />} />
+            <Route path="/strategy/measure" element={<MeasurePage />} />
           </Route>
+          <Route path="/score" element={<ScorePage />} />
         </Routes>
       </BrowserRouter>
       <Toaster position="bottom-right" toastOptions={{ className: "!rounded-none !font-mono !bg-chocolate !text-linen !border-tangelo" }} />

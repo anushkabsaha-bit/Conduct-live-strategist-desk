@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Trash2 } from "lucide-react";
@@ -41,6 +42,7 @@ export default function Campaigns() {
               {c.decision && <Tag tone="dark">Decision: {c.decision}</Tag>}
               {c.provenance && <Tag tone="blue">{c.provenance}</Tag>}
             </div>
+            {/sap score/i.test(c.name) && <Link to="/strategy" data-testid="campaign-to-strategy" className="block border-2 border-tangelo p-4 font-mono text-xs hover:bg-tangelo hover:text-linen transition-colors">SAP Score is now a playable prototype with a launch narrative and a measurement plan. Open Launch Strategy →</Link>}
             <div className="grid md:grid-cols-2 gap-3">
               <Field label="Campaign name"><input data-testid="campaign-name-input" className="field" defaultValue={c.name} onBlur={(e) => save({ name: e.target.value })} /></Field>
               <Field label="Event / context"><input className="field" defaultValue={c.event} onBlur={(e) => save({ event: e.target.value })} /></Field>

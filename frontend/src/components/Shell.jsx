@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, PenLine, Compass, Mic, BookOpen, Rocket, Sparkles, Radar, Users, Newspaper, LineChart, Bot, Library, Search, ListChecks, Menu, X, MoreHorizontal, ChevronDown } from "lucide-react";
+import { LayoutDashboard, PenLine, Compass, Mic, BookOpen, Rocket, Sparkles, Radar, Users, Newspaper, LineChart, Bot, Library, Search, ListChecks, Menu, X, MoreHorizontal, ChevronDown, Target } from "lucide-react";
 import { list } from "../lib/api";
 import { searchApi } from "./Room";
 
 export const ROOMS = [
   { to: "/", label: "Daily Desk", icon: LayoutDashboard },
+  { to: "/strategy", label: "Launch Strategy", icon: Target },
   { to: "/content", label: "Content Desk", icon: PenLine },
   { to: "/narrative", label: "Narrative Room", icon: Compass },
   { to: "/founder", label: "Founder & Exec Comms", icon: Mic },
