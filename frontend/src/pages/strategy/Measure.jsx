@@ -6,6 +6,7 @@ import { useStrategy, logDecision, scoreStats, clearScore } from "../../lib/stra
 import { fmtDate } from "../../lib/meta";
 import { StrategyTabs, Section, Loading } from "../../components/StrategyKit";
 import { Btn } from "../../components/kit";
+import Experiments from "../../components/Experiments";
 
 const num = (s) => { const m = String(s || "").replace(",", ".").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
 const TRACK = { prototype: "Counted by this prototype", external: "Needs external analytics", manual: "Logged by hand" };
@@ -177,16 +178,17 @@ export default function MeasurePage() {
       <StrategyTabs />
       {!doc ? <Loading error={error} retry={reload} /> : (<>
         <header className="bg-ink text-linen px-5 md:px-10 pt-12 pb-10 border-b border-linen/15">
-          <p className="kicker text-botticelli mb-4">03 · Measurement and failure plan · instrument</p>
-          <h1 className="font-display uppercase leading-[0.92] text-4xl sm:text-5xl lg:text-6xl max-w-5xl">Is SAP Score <span className="text-tangelo">worth continuing?</span></h1>
-          <p className="font-mono text-xs mt-5 max-w-2xl leading-relaxed text-linen/75">{doc.objective} No historical performance, benchmarks or conversion rates are assumed. Thresholds stay planning assumptions until there is real baseline data.</p>
+          <p className="kicker text-botticelli mb-4">05 · Did it work? · decide before the results arrive</p>
+          <h1 className="font-display uppercase leading-[0.92] text-4xl sm:text-5xl lg:text-6xl max-w-5xl">What would <span className="text-tangelo">change my mind?</span></h1>
+          <p className="font-mono text-xs mt-5 max-w-2xl leading-relaxed text-linen/75">{doc.objective} No campaign has run. Thresholds are my planning assumptions, not industry benchmarks.</p>
           <div className="mt-8"><ProtoPanel /></div>
         </header>
         <Section n="A" title="Campaign hypothesis" sub="What I'm actually testing. Pick one before setting thresholds."><div className="max-w-3xl"><Hypothesis doc={doc} save={save} /></div></Section>
-        <Section n="B" title="Metrics, thresholds and results" sub="Set assumptions, lock them before launch, record what happened." tone="paper"><Metrics doc={doc} save={save} /></Section>
-        <Section n="C" title="Failure analysis" sub="Patterns to watch for. Each reading is a hypothesis to investigate."><Failure doc={doc} save={save} /></Section>
-        <Section n="D" title="Continue, change or stop" sub="My decision, with the reasoning on record." tone="ink"><Decide doc={doc} save={save} /></Section>
-        <div className="bg-linen px-5 md:px-10 py-8 flex flex-wrap gap-6"><Link to="/strategy" data-testid="measure-to-overview" className="font-mono text-[11px] uppercase tracking-[0.14em] text-chocolate underline-grow inline-flex items-center gap-2">Back to the strategy overview<ArrowRight className="w-3 h-3" /></Link><Link to="/score" data-testid="measure-to-score" className="font-mono text-[11px] uppercase tracking-[0.14em] text-chocolate underline-grow">Try SAP Score</Link></div>
+        <Section n="B" title="Experiments" sub="Plan it, say what would change my mind, run it, then compare." tone="paper"><div className="max-w-6xl"><Experiments doc={doc} save={save} /></div></Section>
+        <Section n="C" title="Metrics, thresholds and results" sub="Set assumptions, lock them before launch, record what happened."><Metrics doc={doc} save={save} /></Section>
+        <Section n="D" title="Failure analysis" sub="Patterns to watch for. Each reading is a hypothesis to investigate." tone="paper"><Failure doc={doc} save={save} /></Section>
+        <Section n="E" title="Continue, change or stop" sub="My decision, with the reasoning on record." tone="ink"><Decide doc={doc} save={save} /></Section>
+        <div className="bg-linen px-5 md:px-10 py-8 flex flex-wrap gap-6"><Link to="/" data-testid="measure-to-overview" className="font-mono text-[11px] uppercase tracking-[0.14em] text-chocolate underline-grow inline-flex items-center gap-2">Back to the start<ArrowRight className="w-3 h-3" /></Link><Link to="/score" data-testid="measure-to-score" className="font-mono text-[11px] uppercase tracking-[0.14em] text-chocolate underline-grow">Try SAP Score</Link></div>
       </>)}
     </div>
   );

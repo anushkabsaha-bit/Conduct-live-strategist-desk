@@ -11,6 +11,10 @@ import Campaigns from "./pages/Campaigns";
 import Radar from "./pages/Radar";
 import AgentRoom from "./pages/AgentRoom";
 import Library from "./pages/Library";
+import Home from "./pages/Home";
+import Writing from "./pages/strategy/Writing";
+import FilmPage from "./pages/strategy/Film";
+import BriefPage from "./pages/strategy/Brief";
 import StrategyOverview from "./pages/strategy/Overview";
 import NarrativePage from "./pages/strategy/Narrative";
 import MeasurePage from "./pages/strategy/Measure";
@@ -23,7 +27,11 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route element={<Shell />}>
-            <Route path="/" element={<DailyDesk />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/desk" element={<DailyDesk />} />
+            <Route path="/writing" element={<Writing />} />
+            <Route path="/strategy/film" element={<FilmPage />} />
+            <Route path="/strategy/brief" element={<BriefPage />} />
             <Route path="/content" element={<ContentDesk />} />
             <Route path="/stories" element={<Stories />} />
             <Route path="/campaigns" element={<Campaigns />} />

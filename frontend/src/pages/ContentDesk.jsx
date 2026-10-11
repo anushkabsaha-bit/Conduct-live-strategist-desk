@@ -9,6 +9,7 @@ import { RunView } from "../components/AgentRunCard";
 import { useRuns } from "../components/useRuns";
 import { create, http, list, recordDecision, update } from "../lib/api";
 import { fmtDate } from "../lib/meta";
+import { DraftFlags, OpeningChoice } from "../components/EditorialExtras";
 
 const FORMATS = ["LinkedIn post", "Founder post", "Substack article", "Medium article", "Substack Note", "Short-form script", "Carousel concept", "Other"];
 const words = (t) => (t.trim() ? t.trim().split(/\s+/).length : 0);
@@ -135,10 +136,10 @@ function MyDecision({ draft, reviews, reload, cur }) {
   const original = draft.versions[0].text;
   const saveNotes = async () => { await update("drafts", draft.id, { decision: { ...d, saved_at: new Date().toISOString() } }); toast.success("Your notes are saved with the draft"); reload(); };
   const record = async () => {
-    const entry = { final: d.final, reasoning: d.reasoning, on_version: cur.n, at: new Date().toISOString() };
+    const entry = { final: d.final, reasoning: d.reasoning, angle_reason: d.angle_reason, reflection: d.reflection, facts_to_check: d.facts_to_check, on_version: cur.n, at: new Date().toISOString() };
     const statusMap = { "Keep as draft": "draft", "Change direction": "draft", "Ready for review with colleagues": "in_review", "Approved by me": "approved", Rejected: "rejected" };
     await update("drafts", draft.id, { decision: { ...d, history: [...(d.history || []), entry] }, status: statusMap[d.final] });
-    await recordDecision({ ref_type: "draft", ref_id: draft.id, choice: d.final, note: `${d.reasoning || ""} (v${cur.n})`, agree: d.agree, disagree: d.disagree, missed: d.missed, reflection: d.reflection });
+    await recordDecision({ ref_type: "draft", ref_id: draft.id, choice: d.final, label: draft.title, note: `${d.reasoning || ""} (v${cur.n})`, angle_reason: d.angle_reason, facts_to_check: d.facts_to_check, agree: d.agree, disagree: d.disagree, missed: d.missed, reflection: d.reflection });
     toast.success(`Decision recorded on v${cur.n}`); reload();
   };
   const [label, tone] = judgement(draft, ag || be);
@@ -162,6 +163,7 @@ function MyDecision({ draft, reviews, reload, cur }) {
           <Field label="What I disagree with, and why"><textarea data-testid="decision-disagree" className="field" rows={3} value={d.disagree || ""} onChange={s("disagree")} /></Field>
           <Field label="What the agents missed"><textarea data-testid="decision-missed" className="field" rows={3} value={d.missed || ""} onChange={s("missed")} /></Field>
           <Field label="Facts to check (product, founders, customer-facing colleagues)"><textarea data-testid="decision-facts" className="field" rows={3} value={d.facts_to_check || ""} onChange={s("facts_to_check")} /></Field>
+          <div className="md:col-span-2"><Field label="Why I chose the final angle"><textarea data-testid="decision-angle" className="field" rows={2} value={d.angle_reason || ""} onChange={s("angle_reason")} /></Field></div>
           <div className="md:col-span-2"><Field label="What do I think matters here that the data alone cannot tell me?"><textarea data-testid="decision-reflection" className="field" rows={3} value={d.reflection || ""} onChange={s("reflection")} /></Field></div>
         </div>
         <Btn variant="line" data-testid="decision-save-notes" onClick={saveNotes}>Save my notes</Btn>
@@ -291,6 +293,8 @@ export default function ContentDesk() {
           {!draft ? <Empty title="No draft selected.">Create a new draft to begin.</Empty> : (
             <div className="space-y-8 min-w-0">
               {draft.provenance && <Tag tone="blue">{draft.provenance}</Tag>}
+              <DraftFlags draft={draft} text={text} />
+              <OpeningChoice draft={draft} cur={cur} reload={load} />
               {draft.versions[0]?.source === "handoff" && draft.brief?.source_material && <details data-testid="handoff-context-panel" className="border border-chocolate/30 bg-paper p-3" open><summary className="kicker text-tangelo cursor-pointer">Context handed over: {draft.versions[0].note}</summary><pre className="whitespace-pre-wrap font-mono text-[11px] mt-2 max-h-64 overflow-auto">{draft.brief.source_material}</pre></details>}
               <div className="grid md:grid-cols-6 gap-3">
                 <div className="md:col-span-2"><Field label="Title"><input data-testid="draft-title-input" className="field" defaultValue={draft.title} key={`t${id}`} onBlur={(e) => meta("title", e.target.value)} /></Field></div>

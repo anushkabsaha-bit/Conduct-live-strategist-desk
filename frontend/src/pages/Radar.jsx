@@ -4,6 +4,7 @@ import { ExternalLink, Plus, FolderPlus, Ban } from "lucide-react";
 import { Btn, Empty, Field, Kicker, Note, PageHead, Tag } from "../components/kit";
 import { Claim } from "../components/Output";
 import AgentRunCard from "../components/AgentRunCard";
+import AskAna from "../components/AskAna";
 import { create, list, listRuns, recordDecision, update } from "../lib/api";
 import { OPP_STATUS, VERIF, todayISO } from "../lib/meta";
 
@@ -81,6 +82,7 @@ function OppRow({ o, reload, cmp, toggleCmp, selected, onSelect, detail }) {
           <AgentRunCard agent="catherine" task="catherine.assess" refType="opportunity" refId={o.id} label="Assess" />
           <AgentRunCard agent="diana" task="diana.opportunity_concept" refType="opportunity" refId={o.id} label="Develop a campaign idea with DIANA" hint="DIANA receives this event's details, audience, dates, participation notes and source link, plus CATHERINE's assessment if run." />
           <AgentRunCard agent="catherine" task="catherine.constraints" refType="opportunity" refId={o.id} label="Practical constraints of DIANA's idea" hint="Run after DIANA. Reviews her concept against this opportunity's requirements." />
+          <AskAna refType="opportunity" refId={o.id} title={o.name} />
           <AgentRunCard dark agent="ana" task="ana.next_steps" refType="opportunity" refId={o.id} label="Consolidated next steps" />
           <div className="flex flex-wrap gap-2">
             <Btn data-testid={`opp-project-${o.id}`} onClick={toProject} disabled={o.status === "converted"}><FolderPlus className="w-3.5 h-3.5" />{o.status === "converted" ? "Already a project" : "I approve: make it a project"}</Btn>

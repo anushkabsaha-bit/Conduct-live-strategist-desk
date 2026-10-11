@@ -29,11 +29,11 @@ export const SourceCard = ({ s }) => (
 );
 
 export const StrategyTabs = () => {
-  const tabs = [["/strategy", "Overview", "00"], ["/strategy/narrative", "Launch narrative", "01"], ["/score", "SAP Score", "02"], ["/strategy/measure", "Measure & decide", "03"]];
+  const tabs = [["/writing", "The writing", "01"], ["/strategy/film", "The customer story", "02"], ["/score", "SAP Score", "03"], ["/strategy/brief", "Campaign brief", "04"], ["/strategy/measure", "Did it work?", "05"], ["/strategy/narrative", "Narrative & evidence", "+"], ["/strategy", "Overview", "+"]];
   return (
     <div className="sticky top-14 z-40 bg-ink border-b border-linen/15 px-5 md:px-10 flex gap-0 overflow-x-auto scroll-thin" data-testid="strategy-tabs">
       {tabs.map(([to, l, n]) => (
-        <NavLink key={to} to={to} end data-testid={`strategy-tab-${n}`} className={({ isActive }) => `shrink-0 px-4 py-3 font-mono text-[10px] tracking-[0.16em] uppercase border-b-2 transition-colors ${isActive ? "border-tangelo text-linen" : "border-transparent text-linen/50 hover:text-linen"}`}>
+        <NavLink key={to} to={to} end data-testid={`strategy-tab-${to.split("/").pop() || "home"}`} className={({ isActive }) => `shrink-0 px-4 py-3 font-mono text-[10px] tracking-[0.16em] uppercase border-b-2 transition-colors ${isActive ? "border-tangelo text-linen" : "border-transparent text-linen/50 hover:text-linen"}`}>
           <span className="text-tangelo mr-2">{n}</span>{l}
         </NavLink>
       ))}
@@ -65,5 +65,14 @@ export const Loading = ({ error, retry }) => (
   <div className="bg-linen text-chocolate px-5 md:px-10 py-20" data-testid="strategy-loading">
     {error ? <div className="font-mono text-sm"><p className="text-tangelo mb-3">{error}</p><button onClick={retry} className="underline-grow">Retry</button></div>
       : <p className="font-mono text-xs inline-flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Loading the strategy workspace</p>}
+  </div>
+);
+
+export const SaveBar = ({ dirty, busy, onSave, testid = "save-bar" }) => (
+  <div className={`sticky bottom-0 z-30 transition-transform duration-300 ${dirty ? "translate-y-0" : "translate-y-full pointer-events-none"}`} data-testid={testid}>
+    <div className="bg-chocolate text-linen px-5 md:px-10 py-3 flex items-center justify-between gap-4 border-t-2 border-tangelo">
+      <span className="font-mono text-[11px] uppercase tracking-[0.14em]">Unsaved changes</span>
+      <button data-testid={`${testid}-btn`} onClick={onSave} disabled={busy} className="bg-tangelo text-linen font-mono text-[11px] uppercase tracking-[0.16em] px-5 py-2 hover:bg-linen hover:text-chocolate transition-colors disabled:opacity-50">{busy ? "Saving" : "Save"}</button>
+    </div>
   </div>
 );

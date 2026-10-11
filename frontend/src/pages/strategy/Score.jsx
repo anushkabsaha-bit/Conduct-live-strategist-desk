@@ -13,6 +13,7 @@ function Intro({ cfg, onStart }) {
       <p className="font-serifit italic text-2xl text-linen/80 mt-6 max-w-xl">{cfg.intro}</p>
       <button data-testid="score-start" onClick={onStart} className="mt-10 inline-flex items-center gap-3 bg-tangelo text-linen font-mono text-xs tracking-[0.18em] uppercase px-7 py-4 hover:bg-linen hover:text-chocolate transition-colors">Start <ArrowRight className="w-4 h-4" /></button>
       <p className="font-mono text-[10px] text-linen/45 mt-8 max-w-xl leading-relaxed" data-testid="score-disclaimer">{cfg.disclaimer}</p>
+      <Link to="/strategy/brief" data-testid="score-why-link" className="inline-block mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-botticelli hover:text-tangelo">Why this exists: the campaign brief</Link>
     </div>
   );
 }
@@ -111,7 +112,7 @@ export default function ScorePage() {
     <div className="min-h-screen bg-ink text-linen flex flex-col" data-testid="score-page">
       <div className="grain" aria-hidden="true" />
       <header className="flex items-center justify-between px-5 md:px-10 h-14 border-b border-linen/10">
-        <Link to="/strategy" data-testid="score-back-to-workspace" className="font-mono text-[10px] tracking-[0.16em] uppercase text-linen/60 hover:text-tangelo inline-flex items-center gap-2"><ArrowLeft className="w-3.5 h-3.5" />Strategy workspace</Link>
+        <Link to="/" data-testid="score-back-to-workspace" className="font-mono text-[10px] tracking-[0.16em] uppercase text-linen/60 hover:text-tangelo inline-flex items-center gap-2"><ArrowLeft className="w-3.5 h-3.5" />Back to the work</Link>
         <span className="font-display uppercase text-xl">conduct<span className="text-tangelo">/</span> <span className="font-mono text-[9px] tracking-[0.18em] text-linen/45 align-middle">prototype</span></span>
         <Link to="/strategy/measure" data-testid="score-to-measure" className="font-mono text-[10px] tracking-[0.16em] uppercase text-linen/60 hover:text-tangelo hidden sm:inline-flex items-center gap-2">How it's judged<ArrowRight className="w-3.5 h-3.5" /></Link>
       </header>

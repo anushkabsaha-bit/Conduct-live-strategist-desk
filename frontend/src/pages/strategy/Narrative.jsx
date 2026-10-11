@@ -7,6 +7,7 @@ import { useStrategy, logDecision } from "../../lib/strategy";
 import { fmtDate } from "../../lib/meta";
 import { LabelChip, Cite, SourceCard, StrategyTabs, Section, Expand, Loading } from "../../components/StrategyKit";
 import { Btn } from "../../components/kit";
+import AskAna from "../../components/AskAna";
 
 const words = (t) => (t || "").trim().split(/\s+/).filter(Boolean).length;
 const cur = (d) => d.versions[d.versions.length - 1];
@@ -225,6 +226,7 @@ export default function NarrativePage() {
         <Audiences doc={doc} save={save} />
         <Drafts doc={doc} save={save} drafts={drafts} reload={loadDrafts} />
         <Questions doc={doc} save={save} />
+        <Section id="ana" n="E" title="Think it through with ANA" sub="Optional. Ask in plain language; ANA reads this narrative and its sources." tone="ink"><div className="max-w-5xl"><AskAna refType="strategy" refId={doc.id} title="the launch narrative" /></div></Section>
         <div className="bg-ink px-5 md:px-10 py-10"><Link to="/score" data-testid="narrative-to-score" className="font-display uppercase text-3xl md:text-4xl text-linen hover:text-tangelo inline-flex items-center gap-3">Next: invite participation with SAP Score<ArrowRight className="w-7 h-7" /></Link></div>
       </>)}
     </div>

@@ -35,7 +35,7 @@ export const VERIF = {
 export const OPP_STATUS = ["new", "saved", "watch", "shortlisted", "rejected", "converted"];
 
 export const NAV = [
-  { to: "/", label: "Daily Desk", n: "01" },
+  { to: "/desk", label: "Daily Desk", n: "01" },
   { to: "/content", label: "Content Desk", n: "02" },
   { to: "/stories", label: "Stories", n: "03" },
   { to: "/campaigns", label: "Campaign Studio", n: "04" },

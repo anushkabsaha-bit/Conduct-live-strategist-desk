@@ -7,6 +7,7 @@ export const LABELS = {
   proposed: { t: "Proposed idea", c: "bg-tangelo text-linen" },
   hypothesis: { t: "Hypothesis to test", c: "border border-chocolate text-chocolate" },
   confirm: { t: "Needs Conduct confirmation", c: "bg-chocolate text-linen" },
+  illustrative: { t: "Illustrative, not verified", c: "border-2 border-tangelo text-tangelo" },
 };
 
 export function useStrategy() {
@@ -32,4 +33,17 @@ export function computeScore(cfg, picks) {
   const score = Math.max(0, Math.min(100, total));
   const result = cfg.results.find((r) => score >= r.min && score <= r.max) || cfg.results[cfg.results.length - 1];
   return { score, result };
+}
+
+export function useLocalDoc(doc, save, key) {
+  const [d, setD] = useState(doc);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { if (doc) setD(doc); }, [doc]);
+  const dirty = doc && JSON.stringify(d) !== JSON.stringify(doc);
+  const persist = async () => {
+    setBusy(true);
+    try { const { id, created_at, updated_at, key: k, ...rest } = d; await save(key, rest); return true; }
+    catch { return false; } finally { setBusy(false); }
+  };
+  return { d, setD, dirty, busy, persist };
 }

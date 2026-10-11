@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Trash2 } from "lucide-react";
@@ -11,7 +11,8 @@ const FIELDS = [["brief", "Campaign brief"], ["audience", "Audience"], ["objecti
 export default function Campaigns() {
   const [items, setItems] = useState([]);
   const [id, setId] = useState(null);
-  const load = useCallback(async () => { const d = await list("campaigns"); setItems(d); setId((c) => c || d[0]?.id); }, []);
+  const [params] = useSearchParams();
+  const load = useCallback(async () => { const d = await list("campaigns"); setItems(d); setId((c) => c || params.get("id") || d[0]?.id); }, []); // eslint-disable-line
   useEffect(() => { load(); }, [load]);
   const c = items.find((x) => x.id === id);
   const save = async (patch) => { await update("campaigns", id, patch); load(); };
@@ -42,7 +43,8 @@ export default function Campaigns() {
               {c.decision && <Tag tone="dark">Decision: {c.decision}</Tag>}
               {c.provenance && <Tag tone="blue">{c.provenance}</Tag>}
             </div>
-            {/sap score/i.test(c.name) && <Link to="/strategy" data-testid="campaign-to-strategy" className="block border-2 border-tangelo p-4 font-mono text-xs hover:bg-tangelo hover:text-linen transition-colors">SAP Score is now a playable prototype with a launch narrative and a measurement plan. Open Launch Strategy →</Link>}
+            {c.context && <details data-testid="campaign-context-panel" open className="border border-chocolate/30 bg-paper p-3"><summary className="kicker text-tangelo cursor-pointer">Context handed over</summary><pre className="whitespace-pre-wrap font-mono text-[11px] mt-2 max-h-64 overflow-auto">{c.context}</pre></details>}
+            {/sap score/i.test(c.name) && <Link to="/strategy/brief" data-testid="campaign-to-strategy" className="block border-2 border-tangelo p-4 font-mono text-xs hover:bg-tangelo hover:text-linen transition-colors">SAP Score is now a playable prototype with a launch narrative and a measurement plan. Open the campaign brief →</Link>}
             <div className="grid md:grid-cols-2 gap-3">
               <Field label="Campaign name"><input data-testid="campaign-name-input" className="field" defaultValue={c.name} onBlur={(e) => save({ name: e.target.value })} /></Field>
               <Field label="Event / context"><input className="field" defaultValue={c.event} onBlur={(e) => save({ event: e.target.value })} /></Field>

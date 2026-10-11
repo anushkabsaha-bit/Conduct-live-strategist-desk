@@ -26,7 +26,7 @@ api = APIRouter(prefix="/api")
 log = logging.getLogger("desk")
 
 COLLS = {"calendar", "tasks", "drafts", "stories", "campaigns", "opportunities", "sources", "decisions", "projects", "handoffs", "workspaces", "strategy"}
-REF_COLL = {"draft": "drafts", "story": "stories", "campaign": "campaigns", "opportunity": "opportunities", "project": "projects", "block": "calendar", "task": "tasks", "workspace": "workspaces"}
+REF_COLL = {"draft": "drafts", "story": "stories", "campaign": "campaigns", "opportunity": "opportunities", "project": "projects", "block": "calendar", "task": "tasks", "workspace": "workspaces", "strategy": "strategy"}
 NOPROJ = {"_id": 0}
 
 
@@ -47,6 +47,7 @@ async def startup():
     await db.messages.create_index([("agent", 1), ("created_at", 1)])
     if await db.meta.find_one({"k": "seeded"}):
         await ST.ensure(db)
+        await ST.ensure_v2(db)
         return
     monday = S.week_monday()
     await db.calendar.insert_many(S.calendar_blocks(monday))
@@ -59,6 +60,7 @@ async def startup():
     await db.sources.insert_many(S.sources(lens, len(POSTS)))
     await db.meta.insert_one({"k": "seeded", "at": now()})
     await ST.ensure(db)
+    await ST.ensure_v2(db)
 
 
 @api.get("/")

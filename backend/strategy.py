@@ -246,3 +246,156 @@ async def ensure(db):
          "failure_notes": "", "created_at": now(), "updated_at": now()},
     ])
     await db.meta.insert_one({"k": "strategy_seeded", "at": now()})
+
+
+# ---------- v2: show the work (additive) ----------
+D_THREE = """Somewhere in an enterprise system, there's probably a decision someone made three years ago that still matters today.
+
+The tricky bit is knowing where that decision lives.
+
+In the code? The documentation? A process map? Or in the head of the person who's been working with the system for years?
+
+That's part of what makes enterprise software so complicated. Businesses change, systems get customised, and the picture of how everything fits together can become harder to keep up to date.
+
+Conduct's public work with Freudenberg Group explores one part of that problem: keeping SAP process documentation accurate, current and connected to reality.
+
+Because understanding a system shouldn't depend entirely on finding the one person who remembers why it works the way it does."""
+
+THREE_FLAGS = [
+    {"line": "three years ago", "label": "illustrative", "note": "Illustrative timeframe. Not a verified detail about Freudenberg or any customer. Change or remove before publication."},
+    {"line": "Conduct's public work with Freudenberg Group", "label": "verified", "note": "Based on Conduct's public Freudenberg post (S1). Read the full post before publishing."},
+    {"line": "the one person who remembers", "label": "interpretation", "note": "A human image, not a claim about any real team."},
+]
+
+OPENING = {
+    "original": "Enterprise software has a documentation problem.\n\nThe way a business works changes over time. Its processes evolve, its systems become more customised, and the documentation that describes them can struggle to keep up.",
+    "alternative": "Ask someone why an enterprise system works the way it does, and the answer might not be in one neat document.\n\nIt might be spread across configuration, process documentation and the experience of the people who have worked with it for years.",
+    "difference": "The original states the problem straight away. The alternative starts with a concrete question and gives the reader something to picture. Neither is automatically better: the extra detail might help a reader who has never thought about documentation, or it might delay the point for someone who already has.",
+    "choice": "", "reason": "", "decided_at": "",
+}
+
+SCORE_V2_QUESTIONS = [
+    {"id": "q1", "q": "Where does the explanation live? When someone asks why an important business process works the way it does, where would you expect to find the answer?", "options": [
+        {"label": "In one clear, up-to-date place", "points": 33},
+        {"label": "Across a few different documents and systems", "points": 18},
+        {"label": "By asking the person who has been there the longest", "points": 6}]},
+    {"id": "q2", "q": "The business has changed. Has the documentation kept up?", "options": [
+        {"label": "There is a clear process for keeping it current", "points": 33},
+        {"label": "It depends on which change happened and who updated it", "points": 18},
+        {"label": "I would want to check before claiming it is up to date", "points": 8}]},
+    {"id": "q3", "q": "A new colleague needs to understand a complicated process. What happens next?", "options": [
+        {"label": "They can follow a clear explanation of the process and its dependencies", "points": 34},
+        {"label": "They need several sources and someone to help connect them", "points": 18},
+        {"label": "They need to find the people who remember how it all fits together", "points": 6}]},
+]
+SCORE_V2_RESULTS = [
+    {"min": 0, "max": 39, "title": "Held together by thoughts and prayers", "line": "The system works. The explanation mostly lives in people, and they are busy.", "prompt": "Who would you call first if a core process broke tomorrow?"},
+    {"min": 40, "max": 59, "title": "Tribal knowledge economy", "line": "The answers exist. They're spread across documents, systems and a few very patient colleagues.", "prompt": "What would you lose if your most experienced colleague left?"},
+    {"min": 60, "max": 84, "title": "Mostly mapped, occasionally haunted", "line": "You know most of it. The rest only appears when someone changes something.", "prompt": "Which part of your system do you trust least, and why?"},
+    {"min": 85, "max": 100, "title": "You may actually know what's going on", "line": "Rare. Your documentation and your system seem to be on speaking terms.", "prompt": "How do you keep it that way when the business keeps changing?"},
+]
+
+Q = lambda q: {"q": q, "answer": "", "evidence": "", "permission": "not requested", "approval": "not approved"}
+FILM = {
+    "key": "film",
+    "label": "Proposed customer-story film concept, based on public information. Not commissioned or approved.",
+    "question": "What happens when the documentation describing a business process no longer reflects how the business actually works?",
+    "question_status": "proposed angle",
+    "angle_reason": "",
+    "public_basis": [{"src": "S1", "text": "Conduct says it is working with Freudenberg on keeping SAP process documentation accurate, current and connected to reality."},
+                     {"src": "S2", "text": "Conduct's mission contrasts a living view of systems with outdated documentation."}],
+    "outline": [
+        {"id": "opening", "part": "Opening", "purpose": "Establish why understanding how a system works matters before anyone changes it.", "notes": "A simple, human question on screen: why does this process work like this?"},
+        {"id": "context", "part": "Context", "purpose": "Explain the documented challenge of keeping process documentation current as the business changes.", "notes": "Use only what is public. No claims about Freudenberg's internal situation until confirmed."},
+        {"id": "investigation", "part": "Investigation", "purpose": "The questions the customer and Conduct would need to answer: what was hard, what changed, how it works day to day.", "notes": "This section can only be written after interviews."},
+        {"id": "evidence", "part": "Evidence", "purpose": "The examples, demonstrations or verified details that would make the story credible.", "notes": "A real before and after of one process, if Freudenberg agrees to show it."},
+        {"id": "ending", "part": "Ending", "purpose": "Return to the opening idea: understand the system before you change it.", "notes": "End on the people, not the product."},
+    ],
+    "interviews": [
+        {"role": "freudenberg", "who": "A Freudenberg representative (only if an interview were possible and permission granted)", "questions": [
+            Q("Before this work, how did your team find out why a process worked the way it did?"),
+            Q("Can you describe a moment when the documentation and the system told different stories?"),
+            Q("What made keeping documentation current hard in practice: time, ownership, change volume, something else?"),
+            Q("What, if anything, has changed in how your team works since the collaboration began?"),
+            Q("What evidence would you be comfortable sharing publicly to show that change?")]},
+        {"role": "conduct_product", "who": "A Conduct product or engineering colleague", "questions": [
+            Q("What exactly does the capability do with process documentation, and what does it not do?"),
+            Q("How does it notice when the system has changed and the documentation hasn't?"),
+            Q("What was the hardest technical problem in the Freudenberg work?"),
+            Q("What could we demonstrate on screen without exposing customer data?")]},
+        {"role": "conduct_customer", "who": "A customer-facing colleague who understands the collaboration", "questions": [
+            Q("Why did Freudenberg want to work on this problem?"),
+            Q("Which people on the customer side felt the problem most?"),
+            Q("Which claimed improvements can be backed by something we could show?"),
+            Q("What is Freudenberg comfortable having said publicly, and who approves it?")]},
+    ],
+    "unanswered": [],
+    "story_changes": [
+        {"if": "The real difficulty was ownership (nobody knew who should update documentation)", "then": "The film becomes a story about people and responsibility, and the technology is the support act."},
+        {"if": "The real difficulty was change volume (the system changed faster than anyone could document)", "then": "The film leads with speed and scale, and the evidence section needs a concrete example of drift."},
+        {"if": "Freudenberg can't be named or shown on camera", "then": "Switch to an anonymised explainer built around a fictionalised, clearly labelled process, or don't make the film."},
+        {"if": "No improvement can be substantiated yet", "then": "Make it a 'work in progress' story about the question, not a success story."},
+    ],
+    "production": [
+        {"kind": "Visual", "idea": "Split screen: a process diagram on one side, the live system behaviour on the other, slowly drifting apart.", "status": "idea"},
+        {"kind": "Visual", "idea": "Hands and desks, not faces, if the customer prefers not to appear.", "status": "idea"},
+        {"kind": "Demonstration", "idea": "A short screen recording of the capability updating documentation after a change. Needs a safe demo environment.", "status": "idea"},
+        {"kind": "Narration", "idea": "Voiced by a Conduct engineer in plain language, with customer voices only if approved.", "status": "idea"},
+        {"kind": "Distribution", "idea": "90 second LinkedIn cut, a 3 minute website version, and 15 second clips for event screens.", "status": "idea"},
+    ],
+}
+
+BRIEF = {
+    "key": "brief",
+    "label": "Proposed campaign brief. Not approved, launched or tested.",
+    "fields": [
+        {"k": "audience", "t": "Audience", "v": "SAP leads and practitioners first, enterprise technology leaders second, curious technical candidates third."},
+        {"k": "problem", "t": "Communications problem", "v": "Keeping process documentation connected to reality matters, but it sounds dull. People nod and scroll past."},
+        {"k": "objective", "t": "Campaign objective", "v": "Get the right people to recognise the gap in their own organisation and talk about it, so the launch narrative has an audience ready for it."},
+        {"k": "why_interactive", "t": "Why an interactive format", "v": "Asking people to answer a question about their own systems turns an abstract problem into a personal one. A score gives them something to compare and a light reason to share."},
+        {"k": "idea", "t": "Central idea", "v": "Your SAP Score: three honest questions about where the explanation for your systems really lives."},
+        {"k": "channels", "t": "Proposed distribution", "v": "Conduct's LinkedIn, employee reshares, event screens and QR codes at SAP community events, and the launch narrative posts."},
+        {"k": "action", "t": "Action I want the audience to take", "v": "Play, share their result with a colleague, and if it rings true, read the launch story or start a conversation."},
+        {"k": "assumptions", "t": "Assumptions to validate", "v": "That practitioners will find the questions familiar. That the result titles are safe to share. That a quiz doesn't feel too light for an enterprise audience."},
+        {"k": "resources", "t": "Resources and approvals", "v": "Design and front-end time, a privacy check on the anonymous counts, brand and legal approval for SAP references, and Conduct's sign-off on the copy."},
+        {"k": "measures", "t": "Measures for the next decision", "v": "Completion rate, share actions, audience relevance and conversations that clearly started with the score. See Did it work?"},
+    ],
+    "challenges": [
+        {"challenge": "Is a quiz too playful for people responsible for critical systems?", "response": ""},
+        {"challenge": "Could 'SAP Score' be read as an official SAP assessment?", "response": ""},
+    ],
+    "alternatives": [
+        {"id": "score", "concept": "SAP Score (interactive quiz)", "pros": "Personal, quick, shareable.", "cons": "Risk of feeling gimmicky; the joke can outshine the point."},
+        {"id": "drift", "concept": "'Spot the drift' visual series", "pros": "Shows the problem visually, low effort for the audience.", "cons": "Passive. Harder to know who recognised themselves."},
+        {"id": "stories", "concept": "Practitioner story prompts ('the oldest decision in your system')", "pros": "Starts real conversations and gathers language.", "cons": "Needs community management; slower to build momentum."},
+    ],
+    "chosen": "", "choice_reason": "",
+}
+
+SCENARIOS = [
+    {"pattern": "People start the quiz but few finish it", "reading": "I would investigate the questions, length and friction before deciding the concept itself has failed."},
+    {"pattern": "People finish and share, but it reaches very few relevant enterprise technology audiences", "reading": "I would investigate distribution and audience fit."},
+    {"pattern": "Participation is strong but no useful conversations follow", "reading": "I would ask whether the campaign is entertaining people without advancing its communications objective."},
+]
+
+
+async def ensure_v2(db):
+    if await db.meta.find_one({"k": "showwork_seeded"}):
+        return
+    await db.drafts.insert_one({"id": _id(), "title": "The decision someone made three years ago", "format": "LinkedIn post",
+        "audience": "SAP practitioners and enterprise technology leaders", "objective": "Make the documentation problem feel human and specific before mentioning Conduct.",
+        "word_limit": None, "status": "draft", "series": "editorial_case", "flags": THREE_FLAGS,
+        "provenance": "Unapproved working draft based on public material. Independent portfolio work, not approved by Conduct.",
+        "brief": {"subject": "The decision someone made three years ago", "channel": "LinkedIn (company)", "source_url": FREUD_URL, "source_material": "Conduct's public Freudenberg collaboration post."},
+        "versions": [{"n": 1, "text": D_THREE, "note": "Original working draft (supplied by Anushka)", "source": "user", "created_at": now()}],
+        "created_at": now(), "updated_at": now()})
+    freud = await db.drafts.find_one({"title": "Enterprise software has a documentation problem"})
+    if freud and "opening_alternatives" not in freud:
+        await db.drafts.update_one({"id": freud["id"]}, {"$set": {"opening_alternatives": OPENING}})
+    cfg = await db.strategy.find_one({"key": "score_config"})
+    if cfg:
+        earlier = {"saved_at": now(), "note": "First question set (4 options each), replaced by Anushka's question directions", "questions": cfg["questions"], "results": cfg["results"]}
+        await db.strategy.update_one({"key": "score_config"}, {"$set": {"questions": SCORE_V2_QUESTIONS, "results": SCORE_V2_RESULTS, "updated_at": now()}, "$push": {"earlier_versions": earlier}})
+    await db.strategy.update_one({"key": "measure"}, {"$set": {"experiments": [], "scenarios": SCENARIOS}})
+    await db.strategy.insert_many([{"id": _id(), **FILM, "created_at": now(), "updated_at": now()}, {"id": _id(), **BRIEF, "created_at": now(), "updated_at": now()}])
+    await db.meta.insert_one({"k": "showwork_seeded", "at": now()})

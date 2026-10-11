@@ -22,7 +22,7 @@ export default function BlockDialog({ block, open, onClose, onSaved }) {
   const del = async () => { await remove("calendar", f.id); toast.success("Block deleted"); onSaved(); onClose(); };
   const startWork = (agent) => {
     const msg = encodeURIComponent(`Preparing for "${f.title}" (${f.date} ${f.start}). Purpose: ${f.purpose}. Prep notes: ${f.prep_notes || "none"}. Help me prepare.`);
-    nav(agent ? `/agents?agent=${agent}&prefill=${msg}&ref_type=block&ref_id=${f.id}` : CATEGORIES[f.category]?.to || "/");
+    nav(agent ? `/agents?agent=${agent}&prefill=${msg}&ref_type=block&ref_id=${f.id}` : CATEGORIES[f.category]?.to || "/desk");
   };
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
