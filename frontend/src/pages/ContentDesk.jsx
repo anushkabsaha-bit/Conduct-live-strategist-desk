@@ -236,9 +236,10 @@ export default function ContentDesk() {
   const [text, setText] = useState("");
   const [choice, setChoice] = useState({});
   const [routed, setRouted] = useState(false);
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const [stage, setStage] = useState("A");
   const load = useCallback(async () => { const d = await list("drafts"); setDrafts(d); setId((cur) => cur || params.get("draft") || d[0]?.id); return d; }, []); // eslint-disable-line
+  useEffect(() => { if (id && params.get("draft") !== id) setParams({ draft: id }, { replace: true }); }, [id]); // eslint-disable-line
   useEffect(() => { load(); }, [load]);
   const draft = drafts.find((d) => d.id === id);
   const cur = draft?.versions[draft.versions.length - 1];
