@@ -40,10 +40,17 @@ export function useLocalDoc(doc, save, key) {
   const [busy, setBusy] = useState(false);
   useEffect(() => { if (doc) setD(doc); }, [doc]);
   const dirty = doc && JSON.stringify(d) !== JSON.stringify(doc);
+  useEffect(() => {
+    if (!dirty) return;
+    const h = (e) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", h);
+    return () => window.removeEventListener("beforeunload", h);
+  }, [dirty]);
   const persist = async () => {
     setBusy(true);
     try { const { id, created_at, updated_at, key: k, ...rest } = d; await save(key, rest); return true; }
     catch { return false; } finally { setBusy(false); }
   };
-  return { d, setD, dirty, busy, persist };
+  const reset = () => setD(doc);
+  return { d, setD, dirty, busy, persist, reset };
 }

@@ -2,13 +2,15 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { list } from "../../lib/api";
-import { StrategyTabs, LabelChip } from "../../components/StrategyKit";
+import { StrategyTabs, LabelChip, CopyDraftBtn } from "../../components/StrategyKit";
+import { useMode } from "../../lib/mode";
 
 const FLAG = { illustrative: "illustrative", verified: "verified", interpretation: "interpretation" };
 const STATUS = { draft: "Unapproved draft", in_review: "In review", approved: "Approved by me, not by Conduct", rejected: "Rejected", published_manually: "Published manually" };
 const cur = (d) => d.versions[d.versions.length - 1];
 
 function Piece({ d, n, children }) {
+  const { owner } = useMode();
   return (
     <article className="grid lg:grid-cols-[200px_1fr_280px] gap-6 lg:gap-10 px-5 md:px-10 py-10 border-b border-chocolate/20 animate-rise" data-testid={`writing-piece-${n}`}>
       <div><p className="font-mono text-xs text-tangelo">{String(n).padStart(2, "0")}</p><p className="kicker mt-2 opacity-60">{d.format} · v{cur(d).n}</p><p className="font-mono text-[9px] tracking-[0.14em] uppercase bg-tangelo text-linen inline-block px-1.5 py-0.5 mt-2">{STATUS[d.status] || d.status}</p></div>
@@ -17,7 +19,8 @@ function Piece({ d, n, children }) {
         <p className="font-serifit text-lg md:text-xl leading-snug whitespace-pre-line max-w-2xl" data-testid={`writing-text-${n}`}>{cur(d).text}</p>
       </div>
       <aside className="space-y-4">{children}
-        <Link to={`/content?draft=${d.id}`} data-testid={`writing-open-${n}`} className="font-mono text-[10px] uppercase tracking-[0.14em] underline-grow inline-flex items-center gap-1">See the editing in Content Desk<ArrowRight className="w-3 h-3" /></Link>
+        <CopyDraftBtn id={d.id} testid={`writing-copy-${n}`} />
+        <Link to={`/content?draft=${d.id}`} data-testid={`writing-open-${n}`} className="font-mono text-[10px] uppercase tracking-[0.14em] underline-grow flex items-center gap-1">{owner ? "Edit the original in Content Desk" : "See the editorial record"}<ArrowRight className="w-3 h-3" /></Link>
       </aside>
     </article>
   );

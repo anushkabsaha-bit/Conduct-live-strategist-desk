@@ -35,7 +35,7 @@ function ProtoPanel() {
     <div className="border-2 border-linen/30 p-5" data-testid="prototype-stats">
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
         <p className="kicker text-botticelli">Prototype test data · not campaign results</p>
-        <div className="flex gap-3"><button data-testid="refresh-stats" onClick={load} className="font-mono text-[10px] uppercase underline-grow">Refresh</button><button data-testid="clear-stats" onClick={clear} className="font-mono text-[10px] uppercase text-linen/60 hover:text-tangelo inline-flex items-center gap-1"><Trash2 className="w-3 h-3" />Clear</button></div>
+        <div className="flex gap-3"><button data-testid="refresh-stats" onClick={load} className="font-mono text-[10px] uppercase underline-grow">Refresh</button><button data-owner-only="" data-testid="clear-stats" onClick={clear} className="font-mono text-[10px] uppercase text-linen/60 hover:text-tangelo inline-flex items-center gap-1"><Trash2 className="w-3 h-3" />Clear</button></div>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-linen/15">
         {cells.map(([l, v]) => <div key={l} className="bg-ink p-4"><p className="font-display text-4xl leading-none" data-testid={`stat-${l.toLowerCase().replace(/ /g, "-")}`}>{v}</p><p className="kicker text-linen/50 mt-2">{l}</p></div>)}
@@ -64,7 +64,7 @@ function Hypothesis({ doc, save }) {
         </label>
       ))}
       {h === "custom" && <textarea data-testid="hypothesis-custom" className="field min-h-[60px]" value={custom} onChange={(e) => setCustom(e.target.value)} placeholder="If we..., then..., because..." />}
-      <Btn data-testid="save-hypothesis" onClick={submit}>Save hypothesis</Btn>
+      <Btn data-owner-only="" data-testid="save-hypothesis" onClick={submit}>Save hypothesis</Btn>
       {doc.hypothesis_id && <p className="font-mono text-[10px] opacity-70">Saved hypothesis: {doc.hypothesis_id}</p>}
     </div>
   );
@@ -119,8 +119,8 @@ function Metrics({ doc, save }) {
     <div data-testid="metrics-plan">
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <span className={`font-mono text-[10px] uppercase tracking-[0.14em] px-2 py-1 ${locked ? "bg-chocolate text-linen" : "border border-chocolate"}`} data-testid="plan-status">{locked ? `Assumptions locked ${fmtDate(doc.locked_at)}` : "Planning: thresholds are assumptions, not benchmarks"}</span>
-        <Btn data-testid="save-plan" onClick={persist} loading={busy} disabled={!dirty}>{dirty ? "Save plan" : "Saved"}</Btn>
-        <Btn data-testid="lock-plan" variant="line" onClick={lock}>{locked ? <><Unlock className="w-3.5 h-3.5" />Unlock to revise</> : <><Lock className="w-3.5 h-3.5" />Lock before launch</>}</Btn>
+        <Btn data-owner-only="" data-testid="save-plan" onClick={persist} loading={busy} disabled={!dirty}>{dirty ? "Save plan" : "Saved"}</Btn>
+        <Btn data-owner-only="" data-testid="lock-plan" variant="line" onClick={lock}>{locked ? <><Unlock className="w-3.5 h-3.5" />Unlock to revise</> : <><Lock className="w-3.5 h-3.5" />Lock before launch</>}</Btn>
       </div>
       <div className="hidden md:grid grid-cols-[1.3fr_1fr_1fr_1fr] gap-3 kicker opacity-60 pb-2 border-b-2 border-chocolate"><span>Metric</span><span>Proposed threshold</span><span>Actual result</span><span>Against assumption</span></div>
       {areas.map((a) => (
@@ -146,10 +146,10 @@ function Decide({ doc, save }) {
   return (
     <div data-testid="decision-panel">
       <div className="grid md:grid-cols-3 gap-3 mb-4">
-        {STATES.map((s) => <button key={s.id} data-testid={`decision-${s.id}`} onClick={() => setSt(s.id)} className={`text-left p-5 border-2 transition-[transform,background-color] duration-200 ${st === s.id ? `${s.c} text-linen border-transparent -translate-y-1` : "border-linen/30 hover:border-linen"}`}><p className="font-display uppercase text-3xl leading-none">{s.t}</p><p className="font-mono text-[11px] mt-2 leading-relaxed">{s.d}</p></button>)}
+        {STATES.map((s) => <button key={s.id} data-owner-only="" data-testid={`decision-${s.id}`} onClick={() => setSt(s.id)} className={`text-left p-5 border-2 transition-[transform,background-color] duration-200 ${st === s.id ? `${s.c} text-linen border-transparent -translate-y-1` : "border-linen/30 hover:border-linen"}`}><p className="font-display uppercase text-3xl leading-none">{s.t}</p><p className="font-mono text-[11px] mt-2 leading-relaxed">{s.d}</p></button>)}
       </div>
       {!hasResults && <p className="font-mono text-[11px] text-botticelli mb-2">No actual results recorded yet. A decision now is a pre-launch judgement, and will be labelled that way.</p>}
-      <div className="grid md:grid-cols-[1fr_auto] gap-3 items-end"><textarea data-testid="decision-reasoning" className="field-dark min-h-[80px]" placeholder="What evidence is this based on? What would change your mind?" value={why} onChange={(e) => setWhy(e.target.value)} /><Btn variant="accent" data-testid="save-decision" onClick={submit}>Record decision</Btn></div>
+      <div className="grid md:grid-cols-[1fr_auto] gap-3 items-end"><textarea data-testid="decision-reasoning" className="field-dark min-h-[80px]" placeholder="What evidence is this based on? What would change your mind?" value={why} onChange={(e) => setWhy(e.target.value)} /><Btn variant="accent" data-owner-only="" data-testid="save-decision" onClick={submit}>Record decision</Btn></div>
       <div className="mt-6" data-testid="decision-history">
         {(doc.decision_history || []).map((d, i) => <div key={i} className="py-2 border-b border-linen/15 font-mono text-xs"><span className="kicker text-tangelo mr-2">{fmtDate(d.at)} · {d.state}{d.had_results ? "" : " · before results"}</span>{d.reasoning}</div>)}
       </div>
@@ -165,7 +165,7 @@ function Failure({ doc, save }) {
         {doc.failure.map((f, i) => <div key={i} className="border-r border-b border-chocolate/30 p-5"><p className="font-mono text-sm font-bold mb-2">If: {f.pattern}</p><p className="font-mono text-[11px] leading-relaxed"><span className="kicker text-tangelo">Possible reading (hypothesis) </span>{f.reading}</p><p className="font-mono text-[11px] leading-relaxed mt-2"><span className="kicker text-tangelo">Investigate </span>{f.investigate}</p></div>)}
       </div>
       <textarea data-testid="failure-notes" className="field min-h-[80px] mt-4 max-w-3xl" placeholder="My notes on what actually happened, once there is evidence" value={notes} onChange={(e) => setNotes(e.target.value)} />
-      <Btn data-testid="save-failure-notes" className="mt-2" disabled={notes === (doc.failure_notes || "")} onClick={async () => { await save("measure", { failure_notes: notes }); toast.success("Notes saved"); }}>Save notes</Btn>
+      <Btn data-owner-only="" data-testid="save-failure-notes" className="mt-2" disabled={notes === (doc.failure_notes || "")} onClick={async () => { await save("measure", { failure_notes: notes }); toast.success("Notes saved"); }}>Save notes</Btn>
     </div>
   );
 }

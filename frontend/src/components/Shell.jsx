@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import ReadOnlyGuard, { ModeStrip } from "./ReadOnlyGuard";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { LayoutDashboard, PenLine, Compass, Mic, BookOpen, Rocket, Sparkles, Radar, Users, Newspaper, LineChart, Bot, Library, Search, ListChecks, Menu, X, MoreHorizontal, ChevronDown, Target, Home, Feather, Clapperboard, Gamepad2, FileText, Gauge } from "lucide-react";
 import { list } from "../lib/api";
@@ -90,7 +91,8 @@ export default function Shell() {
           <SearchBox />
           <NavLink to="/desk" data-testid="open-tasks-indicator" className="flex items-center gap-1.5 font-mono text-[10px] tracking-[0.14em] uppercase text-linen/70 hover:text-tangelo shrink-0"><ListChecks className="w-4 h-4" />{openTasks} open</NavLink>
         </header>
-        <main><Outlet /></main>
+        <ModeStrip />
+        <main><ReadOnlyGuard><Outlet /></ReadOnlyGuard></main>
         <footer className="px-5 md:px-10 py-8 border-t border-linen/15"><p className="font-display uppercase text-4xl leading-none">conduct<span className="text-tangelo">/</span></p></footer>
       </div>
     </div>

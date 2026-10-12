@@ -6,6 +6,7 @@ import { list } from "../../lib/api";
 import { useStrategy } from "../../lib/strategy";
 import { StrategyTabs, Section, Expand, Loading } from "../../components/StrategyKit";
 import { Btn } from "../../components/kit";
+import { useMode } from "../../lib/mode";
 
 function Chain({ n, d, m }) {
   const steps = [
@@ -83,6 +84,7 @@ function ScoreEditor({ cfg, save }) {
 }
 
 export default function StrategyOverview() {
+  const { owner } = useMode();
   const { docs, error, save, reload } = useStrategy();
   const [edited, setEdited] = useState(0);
   const ids = docs?.narrative?.draft_ids;
@@ -102,9 +104,9 @@ export default function StrategyOverview() {
       <Section n="A" title="My calls" sub="The decisions only I make. Agents can review drafts in Content Desk; none of these are automated.">
         <MyCalls n={n} m={m} edited={edited} />
       </Section>
-      <Section n="B" title="SAP Score content" sub="Questions, points and result bands. Edits apply to the playable prototype straight away." tone="paper">
+      {owner && <Section n="B" title="SAP Score content" sub="Questions, points and result bands. Edits apply to the playable prototype straight away." tone="paper">
         <div className="max-w-4xl"><Expand title="Edit questions and results" testid="toggle-score-editor"><ScoreEditor cfg={cfg} save={save} /></Expand><p className="font-mono text-[10px] opacity-60 mt-2">{cfg.provenance}</p></div>
-      </Section>
+      </Section>}
     </div>
   );
 }

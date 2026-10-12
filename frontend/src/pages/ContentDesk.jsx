@@ -9,7 +9,8 @@ import { RunView } from "../components/AgentRunCard";
 import { useRuns } from "../components/useRuns";
 import { create, http, list, recordDecision, update } from "../lib/api";
 import { fmtDate } from "../lib/meta";
-import { DraftFlags, OpeningChoice } from "../components/EditorialExtras";
+import { DraftFlags, OpeningChoice, ReadOnlyDraft } from "../components/EditorialExtras";
+import { useMode } from "../lib/mode";
 
 const FORMATS = ["LinkedIn post", "Founder post", "Substack article", "Medium article", "Substack Note", "Short-form script", "Carousel concept", "Other"];
 const words = (t) => (t.trim() ? t.trim().split(/\s+/).length : 0);
@@ -241,7 +242,11 @@ export default function ContentDesk() {
   const load = useCallback(async () => { const d = await list("drafts"); setDrafts(d); setId((cur) => cur || params.get("draft") || d[0]?.id); return d; }, []); // eslint-disable-line
   useEffect(() => { if (id && params.get("draft") !== id) setParams({ draft: id }, { replace: true }); }, [id]); // eslint-disable-line
   useEffect(() => { load(); }, [load]);
+  const want = params.get("draft");
+  useEffect(() => { if (want && want !== id) { load().then(() => setId(want)); } }, [want]); // eslint-disable-line
+  const { owner } = useMode();
   const draft = drafts.find((d) => d.id === id);
+  const editable = owner || !!draft?.visitor_id;
   const cur = draft?.versions[draft.versions.length - 1];
   useEffect(() => { if (cur) setText(cur.text); setChoice({}); setRouted(false); }, [id, cur?.n]); // eslint-disable-line
   const ag = useRuns("agatha.review", "draft", id), be = useRuns("berdine.review", "draft", id), syn = useRuns("ana.synthesis", "draft", id);
@@ -282,17 +287,18 @@ export default function ContentDesk() {
       <section className="bg-linen text-chocolate px-5 md:px-10 pb-16">
         <div className="grid lg:grid-cols-[260px_1fr] gap-8">
           <aside>
-            <div className="flex items-center justify-between mb-3"><p className="kicker text-tangelo">Drafts</p><Btn variant="line" className="!px-2 !py-1" data-testid="new-draft-btn" onClick={newDraft}><Plus className="w-3 h-3" />New</Btn></div>
+            <div className="flex items-center justify-between mb-3"><p className="kicker text-tangelo">Drafts</p>{owner && <Btn variant="line" className="!px-2 !py-1" data-testid="new-draft-btn" onClick={newDraft}><Plus className="w-3 h-3" />New</Btn>}</div>
             <div className="border-t-2 border-chocolate">
               {drafts.map((d) => (
                 <button key={d.id} data-testid={`draft-item-${d.id}`} onClick={() => setId(d.id)} className={`w-full text-left py-3 px-2 border-b border-chocolate/25 transition-colors ${d.id === id ? "bg-chocolate text-linen" : "hover:bg-botticelli/20"}`}>
-                  <p className="font-mono text-xs font-bold">{d.title}</p><p className="font-mono text-[10px] opacity-70 mt-1">{d.format} · v{d.versions.length} · {d.status}</p>
+                  <p className="font-mono text-xs font-bold">{d.title}</p><p className="font-mono text-[10px] opacity-70 mt-1">{d.visitor_id ? "Your copy (this browser) · " : d.copy_of ? "Working copy · " : !owner ? "Original · read-only · " : ""}{d.format} · v{d.versions.length} · {d.status}</p>
                 </button>
               ))}
             </div>
           </aside>
-          {!draft ? <Empty title="No draft selected.">Create a new draft to begin.</Empty> : (
-            <div className="space-y-8 min-w-0">
+          {!draft ? <Empty title="No draft selected.">Create a new draft to begin.</Empty> : !editable ? <ReadOnlyDraft draft={draft} /> : (
+            <div className="space-y-8 min-w-0" data-editable="">
+              {draft.copy_of && <div className="border-2 border-tangelo p-3 font-mono text-xs flex flex-wrap gap-3 items-center" data-testid="copy-banner"><span className="kicker text-tangelo">Working copy</span><span>Copied from "{draft.copy_of_title}". Edits here never change the original.{draft.visitor_id && " Kept in this browser only. Not private."}</span><button data-testid="open-original" onClick={() => setId(draft.copy_of)} className="underline-grow uppercase text-[10px] tracking-[0.12em]">View the original</button></div>}
               {draft.provenance && <Tag tone="blue">{draft.provenance}</Tag>}
               <DraftFlags draft={draft} text={text} />
               <OpeningChoice draft={draft} cur={cur} reload={load} />

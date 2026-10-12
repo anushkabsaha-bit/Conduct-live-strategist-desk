@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { http, update, recordDecision } from "../lib/api";
 import { Btn, Tag } from "./kit";
+import { CopyDraftBtn } from "./StrategyKit";
 
 export function DraftFlags({ draft, text }) {
   if (!draft.flags?.length) return null;
@@ -70,6 +71,25 @@ export function OpeningChoice({ draft, cur, reload }) {
         <Btn data-testid="opening-save" onClick={save} loading={busy}>Save my choice</Btn>
         {o.decided_at && <p className="font-mono text-[10px] opacity-70" data-testid="opening-saved">Saved: {OPTS.find((x) => x[0] === o.choice)?.[1]}. {o.reason}</p>}
       </div>
+    </div>
+  );
+}
+
+export function ReadOnlyDraft({ draft }) {
+  const c = draft.versions[draft.versions.length - 1];
+  const o = draft.opening_alternatives;
+  const dec = draft.decision || {};
+  return (
+    <div className="space-y-6 min-w-0" data-testid="readonly-draft">
+      <div className="flex flex-wrap items-center gap-3"><Tag tone="solid">Original portfolio draft · read-only</Tag>{draft.provenance && <Tag tone="blue">{draft.provenance}</Tag>}</div>
+      <h2 className="font-display uppercase text-3xl md:text-4xl leading-none">{draft.title}</h2>
+      <p className="font-mono text-[10px] opacity-60">{draft.format} · v{c.n} of {draft.versions.length} · {draft.status}</p>
+      <p className="font-serifit text-xl leading-snug whitespace-pre-line max-w-2xl" data-testid="readonly-draft-text">{c.text}</p>
+      <div className="flex flex-wrap gap-3 items-center"><CopyDraftBtn id={draft.id} testid="content-copy-draft" /><span className="font-mono text-[10px] opacity-60">Opens a separate working copy. You can edit it and run AGATHA, BERDINE and ANA on it.</span></div>
+      <DraftFlags draft={draft} text={c.text} />
+      {o && <div className="grid md:grid-cols-2 border-2 border-chocolate" data-testid="readonly-opening">{[["Original opening", o.original, "original"], ["Proposed alternative", o.alternative, "alternative"]].map(([t, x, k]) => <div key={k} className={`p-4 ${k === "original" ? "md:border-r-2 border-b-2 md:border-b-0 border-chocolate" : ""}`}><p className="kicker text-tangelo mb-2">{t}{o.choice === k && " · my choice"}</p><p className="font-serifit text-lg whitespace-pre-line">{x}</p></div>)}<p className="md:col-span-2 p-4 border-t-2 border-chocolate font-mono text-xs">{o.difference}{o.reason && <span className="block mt-2"><b>Why I chose it:</b> {o.reason}</span>}</p></div>}
+      {(dec.reasoning || dec.angle_reason || dec.reflection) && <div className="bg-paper p-4 space-y-2 font-mono text-xs" data-testid="readonly-decision">{dec.angle_reason && <p><span className="kicker text-tangelo">Why I chose the final angle · </span>{dec.angle_reason}</p>}{dec.reasoning && <p><span className="kicker text-tangelo">My reasoning · </span>{dec.reasoning}</p>}{dec.reflection && <p><span className="kicker text-tangelo">What the data can't tell me · </span>{dec.reflection}</p>}</div>}
+      <div><p className="kicker mb-2">Version history</p>{draft.versions.slice().reverse().map((v) => <p key={v.n} className="font-mono text-[11px] py-1 border-b border-chocolate/15">v{v.n} · {v.note}</p>)}</div>
     </div>
   );
 }

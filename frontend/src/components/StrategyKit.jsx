@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { copyDraft } from "../lib/api";
 import { ChevronDown, ExternalLink, Loader2 } from "lucide-react";
 import { LABELS } from "../lib/strategy";
 
@@ -76,3 +78,33 @@ export const SaveBar = ({ dirty, busy, onSave, testid = "save-bar" }) => (
     </div>
   </div>
 );
+
+export function CopyDraftBtn({ id, testid = "make-copy" }) {
+  const nav = useNavigate();
+  const [busy, setBusy] = useState(false);
+  const go = async () => {
+    setBusy(true);
+    try { const c = await copyDraft(id); toast.success("Your own copy is ready. The original is unchanged."); nav(`/content?draft=${c.id}`); }
+    catch { toast.error("Couldn't create a copy."); } finally { setBusy(false); }
+  };
+  return <button data-testid={testid} onClick={go} disabled={busy} className="font-mono text-[10px] uppercase tracking-[0.14em] border-2 border-chocolate px-3 py-2 hover:bg-chocolate hover:text-linen transition-colors disabled:opacity-50">{busy ? "Copying" : "Create your own version"}</button>;
+}
+
+export const T = ({ edit, value, onChange, rows = 2, className = "", readClass = "", placeholder = "", testid, empty = "" }) =>
+  edit ? <textarea data-testid={testid} rows={rows} className={`field ${className}`} placeholder={placeholder} value={value || ""} onChange={(e) => onChange(e.target.value)} />
+    : <p data-testid={testid ? `${testid}-text` : undefined} className={`whitespace-pre-line ${readClass}`}>{value || <span className="opacity-40">{empty}</span>}</p>;
+
+export function EditBar({ owner, editing, dirty, busy, onEdit, onSave, onCancel, label = "Edit", testid = "doc" }) {
+  if (!owner) return null;
+  const cancel = () => { if (!dirty || window.confirm("Discard your unsaved changes?")) onCancel(); };
+  return (
+    <div className="sticky top-[6.25rem] z-30 flex justify-end px-5 md:px-10 -mb-12 pointer-events-none" data-testid={`${testid}-editbar`}>
+      <div className="pointer-events-auto flex gap-2 mt-3">
+        {!editing ? <button data-testid={`${testid}-edit`} onClick={onEdit} className="font-mono text-[10px] uppercase tracking-[0.14em] bg-chocolate text-linen px-4 py-2 hover:bg-tangelo transition-colors">{label}</button> : <>
+          <button data-testid={`${testid}-cancel`} onClick={cancel} className="font-mono text-[10px] uppercase tracking-[0.14em] bg-linen text-chocolate border-2 border-chocolate px-4 py-2 hover:bg-paper">Cancel</button>
+          <button data-testid={`${testid}-save`} onClick={onSave} disabled={busy || !dirty} className="font-mono text-[10px] uppercase tracking-[0.14em] bg-tangelo text-linen px-4 py-2 hover:bg-chocolate transition-colors disabled:opacity-50">{busy ? "Saving" : dirty ? "Save" : "No changes"}</button>
+        </>}
+      </div>
+    </div>
+  );
+}

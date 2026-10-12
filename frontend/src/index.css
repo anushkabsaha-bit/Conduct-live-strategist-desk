@@ -37,3 +37,7 @@
 .scroll-thin::-webkit-scrollbar { height: 6px; width: 6px; }
 .scroll-thin::-webkit-scrollbar-thumb { background: rgba(102,57,36,.35); }
 .prose-desk p { margin-bottom: .6rem; }
+
+.visitor [data-ro] { border-color: transparent !important; background: transparent !important; box-shadow: none !important; resize: none; cursor: default; }
+.visitor [data-ro]:focus { outline: none; }
+.visitor [data-owner-only] { display: none !important; }

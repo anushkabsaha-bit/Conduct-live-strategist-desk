@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).parent / ".env")
 
-from fastapi import FastAPI, APIRouter, HTTPException, Body
+from fastapi import FastAPI, APIRouter, HTTPException, Body, Request
 from fastapi.responses import StreamingResponse
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -71,9 +71,13 @@ async def root():
 
 # ---------- generic CRUD ----------
 @api.get("/c/{coll}")
-async def list_items(coll: str):
+async def list_items(coll: str, request: Request):
     check(coll)
-    return await db[coll].find({}, NOPROJ).sort("created_at", -1).to_list(1000)
+    q = {}
+    if coll == "drafts":
+        vid = request.headers.get("x-visitor-id") if not is_owner(request) else None
+        q = {"visitor_id": {"$in": [None, vid]}} if vid else {"visitor_id": None}
+    return await db[coll].find(q, NOPROJ).sort("created_at", -1).to_list(1000)
 
 
 @api.get("/c/{coll}/{item_id}")
@@ -113,6 +117,25 @@ async def delete_item(coll: str, item_id: str):
     check(coll)
     await db[coll].delete_one({"id": item_id})
     return {"ok": True}
+
+
+# ---------- drafts: separate working copies (never touch the original) ----------
+@api.post("/drafts/{draft_id}/copy")
+async def copy_draft(draft_id: str, request: Request):
+    d = await db.drafts.find_one({"id": draft_id}, NOPROJ)
+    if not d:
+        raise HTTPException(404, "Draft not found")
+    vid = None if is_owner(request) else request.headers.get("x-visitor-id")
+    if not is_owner(request) and not vid:
+        raise HTTPException(400, "Missing browser id")
+    cur = d["versions"][-1]
+    c = {"id": str(uuid.uuid4()), "title": f"My version: {d['title']}", "format": d.get("format"), "audience": d.get("audience"), "objective": d.get("objective"),
+         "word_limit": d.get("word_limit"), "status": "draft", "brief": d.get("brief"), "copy_of": d["id"], "copy_of_title": d["title"], "visitor_id": vid,
+         "provenance": f"Working copy of '{d['title']}' (v{cur['n']}). The original portfolio draft is unchanged.",
+         "versions": [{"n": 1, "text": cur["text"], "note": f"Copied from original v{cur['n']}", "source": "copy", "created_at": now()}],
+         "created_at": now(), "updated_at": now()}
+    await db.drafts.insert_one(dict(c))
+    return c
 
 
 # ---------- drafts: versions ----------
@@ -399,6 +422,60 @@ async def chat(agent_id: str, body: dict = Body(...)):
                 break
 
     return StreamingResponse(gen(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+# ---------- portfolio protection: visitors can read, play SAP Score and edit only their own copies ----------
+EDITOR_HOSTS = {h.strip() for h in os.environ.get("EDITOR_HOSTS", "").split(",") if h.strip()}
+PUBLISHED = os.environ.get("PORTFOLIO_PUBLISHED", "false").lower() == "true"
+
+
+def is_owner(request: Request) -> bool:
+    if PUBLISHED or request.headers.get("x-view-as") == "visitor":
+        return False
+    host = (request.headers.get("x-forwarded-host") or request.headers.get("host") or "").split(",")[0].strip()
+    return host in EDITOR_HOSTS
+
+
+@api.get("/mode")
+async def mode(request: Request):
+    o = is_owner(request)
+    return {"mode": "owner" if o else "visitor", "published": PUBLISHED,
+            "note": "Working environment: editing is on." if o else "Read-only portfolio. You can play SAP Score and edit your own copies of drafts."}
+
+
+async def visitor_may_write(request: Request) -> bool:
+    path, m = request.url.path, request.method
+    if m == "POST" and path in ("/api/score/events",):
+        return True
+    if m == "POST" and path.startswith("/api/drafts/") and path.endswith("/copy"):
+        return True
+    vid = request.headers.get("x-visitor-id")
+    if not vid:
+        return False
+
+    async def own(did):
+        return bool(did) and await db.drafts.find_one({"id": did, "visitor_id": vid}) is not None
+    parts = path.strip("/").split("/")
+    if m in ("PUT", "DELETE") and parts[:3] == ["api", "c", "drafts"] and len(parts) == 4:
+        return await own(parts[3])
+    if m == "POST" and parts[:2] == ["api", "drafts"] and len(parts) == 4 and parts[3] == "versions":
+        return await own(parts[2])
+    if m == "POST" and path == "/api/run":
+        try:
+            b = json.loads(await request.body() or b"{}")
+        except Exception:
+            return False
+        return b.get("ref_type") == "draft" and await own(b.get("ref_id"))
+    return False
+
+
+@app.middleware("http")
+async def protect_portfolio(request: Request, call_next):
+    if request.method in ("POST", "PUT", "PATCH", "DELETE") and request.url.path.startswith("/api/") and not is_owner(request):
+        if not await visitor_may_write(request):
+            from fastapi.responses import JSONResponse
+            return JSONResponse({"detail": "This portfolio is read-only here. Make your own copy of a draft to experiment."}, status_code=403)
+    return await call_next(request)
 
 
 app.include_router(api)

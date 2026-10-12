@@ -5,7 +5,8 @@ import { Check, Plus, X, ArrowRight } from "lucide-react";
 import { http, list } from "../../lib/api";
 import { useStrategy, logDecision } from "../../lib/strategy";
 import { fmtDate } from "../../lib/meta";
-import { LabelChip, Cite, SourceCard, StrategyTabs, Section, Expand, Loading } from "../../components/StrategyKit";
+import { LabelChip, Cite, SourceCard, StrategyTabs, Section, Loading, CopyDraftBtn } from "../../components/StrategyKit";
+import { useMode } from "../../lib/mode";
 import { Btn } from "../../components/kit";
 import AskAna from "../../components/AskAna";
 
@@ -38,6 +39,7 @@ function Core({ doc }) {
 }
 
 function Audiences({ doc, save }) {
+  const { owner } = useMode();
   const [tab, setTab] = useState(doc.priority_audience || doc.audiences[0].id);
   const [reason, setReason] = useState(doc.priority_reason || "");
   const a = doc.audiences.find((x) => x.id === tab);
@@ -67,12 +69,12 @@ function Audiences({ doc, save }) {
         <div className="space-y-5">
           <div><p className="kicker text-tangelo mb-2">Evidence</p>{a.evidence.map((e, i) => <div key={i} className="flex gap-2 py-1.5 border-b border-chocolate/15 font-mono text-xs"><Cite ids={[e.src]} sources={doc.sources} /><span>{e.text}</span></div>)}</div>
           <div><p className="kicker text-tangelo mb-1">What remains uncertain</p><p className="font-mono text-xs leading-relaxed">{a.uncertain}</p></div>
-          <div className="bg-linen p-4 border-l-4 border-tangelo" data-testid="priority-audience-form">
+          {!owner ? (doc.priority_audience && <div className="bg-linen p-4 border-l-4 border-tangelo" data-testid="priority-audience-readonly"><p className="kicker mb-1">My call: priority audience</p><p className="font-mono text-sm font-bold">{doc.audiences.find((x) => x.id === doc.priority_audience)?.name}</p><p className="font-mono text-xs mt-1 opacity-80">{doc.priority_reason}</p></div>) : <div className="bg-linen p-4 border-l-4 border-tangelo" data-testid="priority-audience-form">
             <p className="kicker mb-2">My call: which audience matters most for this launch?</p>
             <textarea data-testid="priority-reason" className="field min-h-[70px]" placeholder="Why this audience first?" value={reason} onChange={(e) => setReason(e.target.value)} />
             <Btn data-testid="save-priority-audience" className="mt-2" onClick={choose}>Make {a.name.split(" ")[0]} my priority</Btn>
             {doc.priority_audience && <p className="font-mono text-[10px] mt-2 opacity-70">Saved: {doc.audiences.find((x) => x.id === doc.priority_audience)?.name}</p>}
-          </div>
+          </div>}
         </div>
       </div>
     </Section>
@@ -80,6 +82,7 @@ function Audiences({ doc, save }) {
 }
 
 function Evidence({ draft, doc, save }) {
+  const { owner } = useMode();
   const text = cur(draft).text;
   const toggle = async (i) => {
     const k = `${draft.id}:${i}`, checks = { ...(doc.claim_checks || {}) };
@@ -96,7 +99,8 @@ function Evidence({ draft, doc, save }) {
             <p className="font-mono text-[11px] bg-paper px-2 py-1 mb-1.5">"{e.line}"</p>
             <div className="flex flex-wrap items-center gap-2"><LabelChip label={e.label} /><Cite ids={e.src} sources={doc.sources} />{!present && <span className="font-mono text-[9px] uppercase text-tangelo">Line edited, recheck</span>}</div>
             <p className="font-mono text-[11px] opacity-75 mt-1.5 leading-relaxed">{e.note}</p>
-            <label className="flex items-center gap-2 mt-1.5 font-mono text-[10px] uppercase tracking-[0.1em] cursor-pointer"><input type="checkbox" data-testid={`claim-check-${draft.direction}-${i}`} checked={!!ok} onChange={() => toggle(i)} className="accent-[#d54c15]" />I've checked this against the source</label>
+            {owner ? <label className="flex items-center gap-2 mt-1.5 font-mono text-[10px] uppercase tracking-[0.1em] cursor-pointer"><input type="checkbox" data-testid={`claim-check-${draft.direction}-${i}`} checked={!!ok} onChange={() => toggle(i)} className="accent-[#d54c15]" />I've checked this against the source</label>
+              : ok && <p className="font-mono text-[10px] uppercase tracking-[0.1em] mt-1.5 text-[#2F7D4F]" data-testid={`claim-checked-${draft.direction}-${i}`}>Checked against the source</p>}
           </div>
         );
       })}
@@ -104,40 +108,26 @@ function Evidence({ draft, doc, save }) {
   );
 }
 
-function Editor({ draft, onSaved }) {
-  const [vi, setVi] = useState(draft.versions.length - 1);
-  const [text, setText] = useState(cur(draft).text);
-  const [note, setNote] = useState("");
-  const [busy, setBusy] = useState(false);
-  useEffect(() => { setVi(draft.versions.length - 1); setText(cur(draft).text); }, [draft]);
-  const dirty = text !== cur(draft).text;
-  const saveV = async () => {
-    setBusy(true);
-    try { await http.post(`/drafts/${draft.id}/versions`, { text, note: note || "Edited in Launch narrative", source: "user" }); setNote(""); await onSaved(); toast.success("Saved as a new version"); }
-    catch { toast.error("Could not save. Your text is still here, try again."); } finally { setBusy(false); }
-  };
-  const viewing = draft.versions[vi];
+function ReadDraft({ draft }) {
+  const { owner } = useMode();
+  const c = cur(draft);
   return (
-    <div data-testid={`draft-editor-${draft.direction}`}>
-      <div className="flex flex-wrap items-center gap-3 mb-3">
+    <div data-testid={`draft-read-${draft.direction}`}>
+      <div className="flex flex-wrap items-center gap-3 mb-4">
         <span className="font-mono text-[9px] tracking-[0.14em] uppercase bg-tangelo text-linen px-1.5 py-0.5">Proposed · unapproved portfolio draft</span>
-        <select data-testid="draft-version-select" className="field !w-auto !py-1 !text-[11px]" value={vi} onChange={(e) => { setVi(+e.target.value); setText(draft.versions[+e.target.value].text); }}>
-          {draft.versions.map((v, i) => <option key={i} value={i}>{`v${v.n} · ${v.note} · ${fmtDate(v.created_at)}`}</option>)}
-        </select>
-        <span className="font-mono text-[10px] opacity-60">{words(text)} words</span>
+        <span className="font-mono text-[10px] opacity-60">v{c.n} of {draft.versions.length} · {words(c.text)} words</span>
       </div>
-      <textarea data-testid="draft-textarea" className="field min-h-[360px] !font-serifit !text-lg leading-snug" value={text} onChange={(e) => setText(e.target.value)} />
-      {vi !== draft.versions.length - 1 && <p className="font-mono text-[10px] text-tangelo mt-1">Viewing v{viewing.n}. Saving will create a new version from this text. Nothing is overwritten.</p>}
-      <div className="flex flex-wrap items-center gap-2 mt-2">
-        <input data-testid="draft-version-note" className="field !w-64 !py-1.5" placeholder="What did you change and why?" value={note} onChange={(e) => setNote(e.target.value)} />
-        <Btn data-testid="save-draft-version" onClick={saveV} loading={busy} disabled={!dirty}>Save new version</Btn>
-        <Link to={`/content?draft=${draft.id}`} data-testid="open-in-content-desk" className="font-mono text-[10px] tracking-[0.14em] uppercase underline-grow inline-flex items-center gap-1">Get AGATHA and BERDINE reviews in Content Desk<ArrowRight className="w-3 h-3" /></Link>
+      <p className="font-serifit text-xl leading-snug whitespace-pre-line max-w-2xl" data-testid="draft-text">{c.text}</p>
+      <div className="flex flex-wrap items-center gap-3 mt-6">
+        <CopyDraftBtn id={draft.id} testid={`copy-draft-${draft.direction}`} />
+        {owner && <Link to={`/content?draft=${draft.id}`} data-testid="open-in-content-desk" className="font-mono text-[10px] tracking-[0.14em] uppercase underline-grow inline-flex items-center gap-1">Edit the original in Content Desk<ArrowRight className="w-3 h-3" /></Link>}
       </div>
     </div>
   );
 }
 
 function Compare({ drafts, doc, save }) {
+  const { owner } = useMode();
   const [pick, setPick] = useState(doc.preferred_draft || "");
   const [why, setWhy] = useState(doc.preferred_reason || "");
   const submit = async () => {
@@ -154,18 +144,18 @@ function Compare({ drafts, doc, save }) {
           const counts = d.evidence.reduce((m, e) => ({ ...m, [e.label]: (m[e.label] || 0) + 1 }), {});
           return (
             <label key={d.id} className={`border-r-2 border-b-2 border-chocolate p-5 cursor-pointer transition-colors ${pick === d.id ? "bg-paper" : "hover:bg-paper/60"}`} data-testid={`compare-col-${d.direction}`}>
-              <div className="flex items-center gap-2 mb-3"><input type="radio" name="pref" checked={pick === d.id} onChange={() => setPick(d.id)} data-testid={`prefer-${d.direction}`} className="accent-[#d54c15]" /><span className="font-display uppercase text-xl leading-none">{d.title.split(": ")[1]}</span></div>
+              <div className="flex items-center gap-2 mb-3">{owner && <input type="radio" name="pref" checked={pick === d.id} onChange={() => setPick(d.id)} data-testid={`prefer-${d.direction}`} className="accent-[#d54c15]" />}{!owner && doc.preferred_draft === d.id && <span className="font-mono text-[9px] uppercase bg-chocolate text-linen px-1.5">My choice</span>}<span className="font-display uppercase text-xl leading-none">{d.title.split(": ")[1]}</span></div>
               <p className="font-mono text-[10px] opacity-60 mb-3">v{cur(d).n} · {words(cur(d).text)} words · {Object.entries(counts).map(([k, v]) => `${v} ${k}`).join(", ")}</p>
               <p className="font-serifit text-base leading-snug whitespace-pre-line">{cur(d).text}</p>
             </label>
           );
         })}
       </div>
-      <div className="mt-5 grid md:grid-cols-[1fr_auto] gap-3 items-end max-w-3xl">
+      {owner && <div className="mt-5 grid md:grid-cols-[1fr_auto] gap-3 items-end max-w-3xl">
         <textarea data-testid="preferred-reason" className="field min-h-[70px]" placeholder="Why this direction, and what would you still change?" value={why} onChange={(e) => setWhy(e.target.value)} />
         <Btn data-testid="save-preferred-direction" onClick={submit}>Save my decision</Btn>
-      </div>
-      {doc.preferred_draft && <p className="font-mono text-[11px] mt-2" data-testid="preferred-saved"><Check className="w-3 h-3 inline text-[#2F7D4F]" /> Current preference: {drafts.find((x) => x.id === doc.preferred_draft)?.title}</p>}
+      </div>}
+      {doc.preferred_draft && <p className="font-mono text-[11px] mt-2" data-testid="preferred-saved"><Check className="w-3 h-3 inline text-[#2F7D4F]" /> My preference: {drafts.find((x) => x.id === doc.preferred_draft)?.title}{doc.preferred_reason && <span className="block mt-1 opacity-80">{doc.preferred_reason}</span>}</p>}
     </div>
   );
 }
@@ -181,13 +171,14 @@ function Drafts({ doc, save, drafts, reload }) {
         <button data-testid="draft-compare-toggle" onClick={() => setMode("compare")} className={`px-3 py-2 font-mono text-[11px] uppercase tracking-[0.1em] border-2 border-tangelo transition-colors ${mode === "compare" ? "bg-tangelo text-linen" : "text-tangelo hover:bg-tangelo/10"}`}>Compare all three</button>
       </div>
       {mode === "compare" ? <Compare drafts={drafts} doc={doc} save={save} /> : (
-        <div className="grid lg:grid-cols-[1.4fr_1fr] gap-8"><Editor draft={d} onSaved={reload} /><Evidence draft={d} doc={doc} save={save} /></div>
+        <div className="grid lg:grid-cols-[1.4fr_1fr] gap-8"><ReadDraft draft={d} /><Evidence draft={d} doc={doc} save={save} /></div>
       )}
     </Section>
   );
 }
 
 function Questions({ doc, save }) {
+  const { owner } = useMode();
   const [q, setQ] = useState("");
   const qs = doc.questions || [];
   const add = async () => { if (!q.trim()) return; await save("narrative", { questions: [...qs, q.trim()] }); setQ(""); toast.success("Question saved"); };
@@ -195,15 +186,16 @@ function Questions({ doc, save }) {
   return (
     <Section id="questions" n="D" title="Questions for Conduct" sub="What I'd need answered before any of this could be published." tone="paper">
       <ul className="max-w-3xl" data-testid="conduct-questions">
-        {qs.map((x, i) => <li key={i} className="flex items-start gap-3 py-2.5 border-b border-chocolate/20 font-mono text-sm"><span className="text-tangelo">?</span><span className="flex-1">{x}</span><button data-testid={`remove-question-${i}`} onClick={() => del(i)} className="opacity-50 hover:opacity-100 hover:text-tangelo"><X className="w-3.5 h-3.5" /></button></li>)}
+        {qs.map((x, i) => <li key={i} className="flex items-start gap-3 py-2.5 border-b border-chocolate/20 font-mono text-sm"><span className="text-tangelo">?</span><span className="flex-1">{x}</span>{owner && <button data-testid={`remove-question-${i}`} onClick={() => del(i)} className="opacity-50 hover:opacity-100 hover:text-tangelo"><X className="w-3.5 h-3.5" /></button>}</li>)}
         {!qs.length && <li className="font-mono text-xs opacity-60 py-2">No open questions recorded.</li>}
       </ul>
-      <div className="flex gap-2 mt-4 max-w-3xl"><input data-testid="new-question-input" className="field" placeholder="Add an uncertainty or question for Conduct" value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} /><Btn data-testid="add-question" onClick={add}><Plus className="w-3.5 h-3.5" />Add</Btn></div>
+      {owner && <div className="flex gap-2 mt-4 max-w-3xl"><input data-testid="new-question-input" className="field" placeholder="Add an uncertainty or question for Conduct" value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} /><Btn data-testid="add-question" onClick={add}><Plus className="w-3.5 h-3.5" />Add</Btn></div>}
     </Section>
   );
 }
 
 export default function NarrativePage() {
+  const { owner } = useMode();
   const { docs, error, save, reload } = useStrategy();
   const [drafts, setDrafts] = useState(null);
   const ids = docs?.narrative?.draft_ids;
@@ -226,7 +218,7 @@ export default function NarrativePage() {
         <Audiences doc={doc} save={save} />
         <Drafts doc={doc} save={save} drafts={drafts} reload={loadDrafts} />
         <Questions doc={doc} save={save} />
-        <Section id="ana" n="E" title="Think it through with ANA" sub="Optional. Ask in plain language; ANA reads this narrative and its sources." tone="ink"><div className="max-w-5xl"><AskAna refType="strategy" refId={doc.id} title="the launch narrative" /></div></Section>
+        {owner && <Section id="ana" n="E" title="Think it through with ANA" sub="Optional. Ask in plain language; ANA reads this narrative and its sources." tone="ink"><div className="max-w-5xl"><AskAna refType="strategy" refId={doc.id} title="the launch narrative" /></div></Section>}
         <div className="bg-ink px-5 md:px-10 py-10"><Link to="/score" data-testid="narrative-to-score" className="font-display uppercase text-3xl md:text-4xl text-linen hover:text-tangelo inline-flex items-center gap-3">Next: invite participation with SAP Score<ArrowRight className="w-7 h-7" /></Link></div>
       </>)}
     </div>
