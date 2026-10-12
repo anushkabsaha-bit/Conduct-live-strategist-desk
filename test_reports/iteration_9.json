@@ -1,0 +1,33 @@
+{
+  "summary": "Iter10 — SAP Score booth campaign expanded in place. Backend pytest (6/6 passed, /app/backend/tests/test_booth_iter10.py): GET /api/c/campaigns returns exactly 2 campaigns ('New campaign' + 'SAP Score booth'); the booth id is still df7ec172-6f55-4fe1-a975-08b554124815; brief starts 'A physical Conduct photo booth'; concept starts 'SAP Score: 21%'; decision='develop'; the 12 original fields are populated; timeline + alternatives filled; story.why.elements=6, story.why.chain=4, journey=6, recruitment.steps=5, commercial.chain=7, commercial.failures=4, phases=8, budget=6, decisions=9. No em dash character (U+2014) found anywhere in the booth story JSON. GET /api/c/strategy measure.metrics length=17; 8 have campaign=='booth' with the two expected areas 'Booth activation' and 'Booth: recruitment (tracked separately)'; score_config still has 3 questions x 3 options. Visitor PUT /api/c/campaigns/{BID} returns 403. Frontend (desktop 1920 + mobile 390) ?as=owner /campaigns?booth=1: booth-story, booth-label, booth-polaroid, booth-nav all visible; 8 booth-nav-* chapter anchors scroll to 8 booth-chapter-* sections. Journey tabs A..F all render journey-stage-*; polaroid shows on B and D; F shows followthrough-table with 4 rows. recruit-label contains 'Proposed extension'; recruit-steps=5. commercial-chain shows 7 step spans; failure-0..3 all present. booth-phases shows 8 rows. budget-edit (owner only) reveals inputs budget-{low|high|note}-0..5; typing in budget-low-0 then budget-cancel triggers window.confirm and reverts cleanly; re-edit, set budget-low-0 '£1,000 (test)', budget-save, reload → persisted; then cleared and re-saved → reverted. booth-metrics renders 8 booth-result-* nodes, each reading 'Result · Not measured'. booth-to-measure link opens /strategy/measure#booth; the #booth anchor exists and 'Booth activation' + 'Booth: recruitment (tracked separately)' render on the measure page. My decisions renders 9 prompts with greyed example lines; decisions-edit → decision-answer-0='TEST answer' + verdict-revise + verdict-reason → decisions-save → reload persists; booth-next shows 'REVISE'. All test edits reverted (budget low/high/note cleared, all 9 decision answers cleared, verdict + verdict_reason cleared) via PUT /api/c/campaigns/{BID} and confirmed via GET. Home ?as=owner: home-booth-link href='/campaigns?booth=1' and navigates correctly, booth auto-selects; home-entry-03 href='/score'. Visitor (?as=visitor): booth-story visible, budget-edit and decisions-edit hidden (query returns null); 14 campaign-* textareas are all read-only (0 editable). Mobile 390x844: 8 chapters render, booth-nav scrolls horizontally, journey-tab-D switches stage and shows polaroid, overall layout stacks correctly.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_booth_iter10.py",
+    "/app/test_reports/pytest/iter10_booth.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Measure.jsx uses document.querySelector(location.hash) directly to resolve a scroll target. If a user ever navigates to /strategy/measure#booth?as=owner (wrong URL ordering), the hash becomes '#booth?as=owner' and querySelector throws 'is not a valid selector' — I hit this once by typo. Not a real-world path (links to /strategy/measure#booth are correctly ordered elsewhere), but a two-line guard (try/catch or strip non-id chars) would prevent an Emergent runtime-error overlay from showing.",
+   "BoothStory Decisions component has no UI control to clear the verdict once set — the three verdict-{proceed|revise|stop} buttons only set the value, they don't toggle. The spec asked to 'revert verdict via edit + save', which is only achievable by API. Low priority: either add a 'Clear verdict' button or make clicking the active verdict toggle it off.",
+    "strategy.py ensure_v3 correctly checks meta.booth_seeded and campaigns.find_one by name to avoid duplicates; the campaigns list stays at exactly 2 across repeated server restarts.",
+    "booth-nav is 8 chapters but spec text said 'each booth-nav-* link scrolls to booth-chapter-*' — chapter count matches 8 anchors, verified.",
+    "No em dash characters in booth story — consistent with the house style rule for this portfolio."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_booth_iter10.py",
+    "/app/test_reports/iteration_9.json",
+    "/app/test_reports/pytest/iter10_booth.xml"
+  ],
+  "success_rate": {"backend": "100% (6/6 pytest)", "frontend": "100% (owner edit/save/revert, visitor read-only, home link, measure link, mobile all pass)"},
+  "test_credentials": "None (?as=owner / ?as=visitor).",
+  "seed_data_creation": "No permanent seed data created. Temporary writes (budget low_0='£1,000 (test)', decision-answer-0='TEST answer', verdict='revise', verdict_reason='TEST reason') were all reverted via PUT /api/c/campaigns/{BID} to empty strings. Verified via GET that story.verdict='', story.decisions[0].a='', story.budget[0].low=''.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Booth campaign is complete and the DB is in the original seeded state. Reusable regression file: /app/backend/tests/test_booth_iter10.py (6 tests). Minor note for UI tests: BoothStory does not expose a UI 'clear verdict' control, so if a future test needs to revert verdict to empty, do it via PUT /api/c/campaigns/{id}. The measure page scrolls to '#booth' only if the hash is exactly '#booth' — do not append query params after the hash.",
+  "rca of the issue": "N/A — no bugs blocking the spec. Only one defensive-coding comment (Measure.jsx querySelector on raw hash)."
+}

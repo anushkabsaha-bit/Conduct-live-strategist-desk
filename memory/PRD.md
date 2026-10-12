@@ -90,3 +90,10 @@ Interactive AI-powered working desk demonstrating how Anushka Saha would run the
 - GET /api/c/drafts: visitors see originals + own copies; owner sees originals only
 - UI: mode strip; portfolio pages read-only (Film/Brief owner-only Edit/Save/Cancel with discard confirm + beforeunload); narrative drafts read-only + "Create your own version"; Content Desk ReadOnlyDraft for originals, copy-banner for copies; owner-only decision controls; ReadOnlyGuard makes How I Work inputs read-only for visitors
 - Tested iteration_8: backend 14/14, frontend all pass
+
+## Iteration 8 (SAP Score booth campaign expanded in place, 2026-10-12)
+- Backup /app/backups/pre_booth_*. Existing campaign df7ec172 (SAP Score booth) gained `story` (ensure_v3, meta booth_seeded); empty timeline/alternatives filled, other 12 fields untouched; no new campaign/page/room
+- BoothStory.jsx in Campaign Studio: 8 chapters (Why this idea, Journey A-F + illustrative Polaroid, Recruitment branch (proposed extension + fairness safeguards), Commercial logic + failure points, Execution 8 phases + owner-editable budget assumptions, Measurement, My decisions (9 prompts, owner-editable, verdict proceed/revise/stop), What I'd decide next); working brief + agent runs preserved below
+- 8 booth metrics appended to existing measure doc (area "Booth activation" + "Booth: recruitment (tracked separately)"), shown as "Not measured" in campaign; /strategy/measure#booth anchor
+- Home SAP Score card: "The booth campaign" link (/campaigns?booth=1)
+- Tested iteration_9: backend 6/6, frontend all pass; test edits reverted
