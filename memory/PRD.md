@@ -83,3 +83,10 @@ Interactive AI-powered working desk demonstrating how Anushka Saha would run the
 - SAP Score: user's 3 questions x 3 options active; previous set kept in score_config.earlier_versions
 - Ask ANA (task ana.ask, original ANA prompt + record/CATHERINE context) in Radar opportunity and Narrative page; Continue in Narrative/Campaign/Content hands over context
 - Tested: iteration_7 (two runs) all passing; test artefacts cleaned. Launch draft 3 has a v2 "Manual edit" made before this session (assumed user's), left untouched
+
+## Iteration 7 (Editing permissions, keyless, 2026-10-12)
+- Owner vs visitor decided server-side per request: owner if X-Forwarded-Host/Host in EDITOR_HOSTS (backend/.env: preview host + localhost:8001) and PORTFOLIO_PUBLISHED != "true". Anything else (e.g. production domain) = visitor. Header X-View-As: visitor downgrades (frontend ?as=visitor / ?as=owner)
+- Middleware blocks all visitor writes (403) except: POST /api/score/events, POST /api/drafts/{id}/copy, and writes/runs on drafts whose visitor_id == X-Visitor-Id (per-browser id in localStorage; not private)
+- GET /api/c/drafts: visitors see originals + own copies; owner sees originals only
+- UI: mode strip; portfolio pages read-only (Film/Brief owner-only Edit/Save/Cancel with discard confirm + beforeunload); narrative drafts read-only + "Create your own version"; Content Desk ReadOnlyDraft for originals, copy-banner for copies; owner-only decision controls; ReadOnlyGuard makes How I Work inputs read-only for visitors
+- Tested iteration_8: backend 14/14, frontend all pass

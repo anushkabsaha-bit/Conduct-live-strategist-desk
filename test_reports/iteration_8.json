@@ -1,0 +1,34 @@
+{
+  "summary": "Iter9 end-to-end verification of the keyless owner/visitor portfolio protection. Backend pytest (14/14 passed, /app/backend/tests/test_visitor_mode_iter9.py): GET /api/mode returns owner for the preview host and visitor when X-View-As: visitor is sent. With X-View-As: visitor, these all return 403 as specified — POST /api/c/tasks, PUT /api/c/calendar/{id}, PUT /api/c/drafts/{original}, POST /api/drafts/{original}/versions, POST /api/c/decisions, POST /api/agents/ana/revisions, DELETE /api/score/events, POST /api/run with ref_type=draft on an original, PUT /api/c/strategy/{score_config.id} (verified score_config.intro was NOT mutated by the attempted write). Copy flow: POST /api/drafts/{orig}/copy with X-Visitor-Id A creates a visitor-tagged copy (copy_of set, visitor_id=A, versions length 1, title prefixed 'My version:'). Visitor A can PUT /api/c/drafts/{copyId} and POST /api/drafts/{copyId}/versions (v2 created). Visitor B is blocked (403) on the same copy. GET /api/c/drafts with X-Visitor-Id A includes the copy; X-Visitor-Id B does not; owner GET excludes the copy entirely (filter {visitor_id: null}). Visitor can POST /api/score/events (type start) — one event remained in the DB from this test. Frontend (desktop 1920x1080 + mobile 390x844): visitor on /, /writing, /strategy/narrative, /strategy/film, /strategy/brief shows 0 textareas; film-edit and brief-edit buttons are absent (count 0). The mode strip is visible with data-testid mode-visitor and the Back-to-editing link. Narrative draft-compare-toggle, cite-S1 source cards, audience tabs, interview expanders all remain interactive. Priority-audience form, Ask ANA panel and new-question input are hidden for visitors. Visitor copy-draft-problem on narrative navigates to /content?draft=<newid> with the copy-banner; the textarea is editable and save-version-btn creates v2 on the copy. Opening the original 'Enterprise software has a documentation problem' from Content Desk as a visitor shows readonly-draft and content-copy-draft; no editor textarea rendered. On /strategy/measure all data-owner-only buttons (save-plan, lock-plan, save-hypothesis, clear-stats, save-decision, save-failure-notes) are DOM-present but hidden via CSS .visitor [data-owner-only]{display:none !important} (verified with is_visible()==False). On /desk visitor mode, ReadOnlyGuard sets body.visitor and only the top search input remains editable (which is correct, it is navigation, not portfolio content). OWNER mode: mode-owner strip and View-as-visitor link visible. /strategy/film: film-edit reveals 32 textareas; editing outline-notes-context then clicking film-cancel with dirty state triggers window.confirm (accepted) and reverts to the original text; re-editing with 'SAVED9' marker then film-save persists after reload; final cleanup edit restores the exact original. /strategy/brief: analogous flow with brief-objective (B9EDIT marker) — saved, persisted, then reverted. /strategy toggle-score-editor visible for owner. Mobile (390x844) visitor views render fine on /writing, /strategy/film, /strategy/brief and /content (0 textareas, mode strip wraps correctly over two lines).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_visitor_mode_iter9.py",
+    "/app/test_reports/pytest/iter9_visitor.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py is_owner correctly downgrades on X-View-As: visitor and also honours PORTFOLIO_PUBLISHED to force visitor mode in production — clean, keyless model.",
+    "visitor_may_write ownership check uses an inline body-parse-once pattern for POST /api/run; the request body is consumed in middleware but FastAPI re-reads it in the handler. Tested and works, but if a future endpoint relies on request.body() stream state this pattern could regress — consider request._body caching if more such paths are added.",
+    "list_items filters drafts with {'visitor_id': {'$in': [None, vid]}} for visitors and {'visitor_id': None} for owners — correct and matches the spec exactly.",
+    "ReadOnlyGuard uses body.visitor class + CSS display:none for owner-only buttons; MutationObserver re-locks dynamically added inputs. Robust pattern. One subtle point: elements inside [data-editable] opt out of the lock — Film and Brief edit mode wraps their editable surface with data-editable, so textareas are correctly released on film-edit/brief-edit.",
+    "frontend/.env EDITOR_HOSTS value matches the preview host (strategist-desk-1.preview.emergentagent.com) so owner detection works on the preview URL. For deployment, flipping PORTFOLIO_PUBLISHED=true or omitting the production domain from EDITOR_HOSTS will make the deployed copy visitor-only, as intended.",
+    "api.js axios interceptor correctly injects X-Visitor-Id and X-View-As on every request; the 403 toast handler surfaces the server detail message, so visitor writes that slip past the UI (e.g. via direct curl or future bugs) are user-visible."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_visitor_mode_iter9.py",
+    "/app/test_reports/iteration_8.json",
+    "/app/test_reports/pytest/iter9_visitor.xml"
+  ],
+  "success_rate": {"backend": "100% (14/14 pytest)", "frontend": "100% (visitor read-only + copy flow + owner edit/save/cancel/persist + mobile all pass)"},
+  "test_credentials": "None (no auth; owner/visitor by ?as= or X-View-As header).",
+  "seed_data_creation": "Created and then deleted 2 visitor-tagged drafts (one from narrative copy-draft-problem test, one from an earlier content-copy-draft click on the Enterprise original). Both removed via Mongo delete_many({visitor_id: {$ne: null}}). One score_events {type: start} entry remains in the DB from the visitor-posts-event test (acceptable per spec: do NOT clear /api/score/events). Launch draft 3 still has 1+2 versions (preserved per spec). All owner Film/Brief edits were reverted to original.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Visitor/owner model is solid and fully verified. test_visitor_mode_iter9.py is a regression suite covering the 14 critical paths (status + data assertions). Reusable fixtures: owner_session() and visitor_session(vid). Mode is driven by request headers (X-View-As: visitor and X-Visitor-Id: <uuid>), no credentials. The one caveat for future testing: visitors cannot DELETE /api/score/events, so each visitor-start event is additive — note how many are created per run.",
+  "rca of the issue": "N/A — no bugs found in this iteration."
+}
