@@ -97,3 +97,9 @@ Interactive AI-powered working desk demonstrating how Anushka Saha would run the
 - 8 booth metrics appended to existing measure doc (area "Booth activation" + "Booth: recruitment (tracked separately)"), shown as "Not measured" in campaign; /strategy/measure#booth anchor
 - Home SAP Score card: "The booth campaign" link (/campaigns?booth=1)
 - Tested iteration_9: backend 6/6, frontend all pass; test edits reverted
+
+## Iteration 9 (Opportunity Radar market search fix, 2026-10-12)
+- Root cause: hardcoded Germany question + free-text Markets passed as unenforced extra; prompt said "matching the QUERY"; 6 web searches / 8000 tokens too small for multi-market (truncated JSON)
+- Fix in place: MarketPicker (4 priority markets default, toggle/Only/All/custom add, localStorage radarPlan), auto question from markets/types/date range + mismatch warning; backend live_research_input() normalises markets (default 4) + search_brief; prompt: markets authoritative, per-market searches + per_market coverage, cost only with cost_source, date_checked; web max_uses 3x markets (6-14); max_tokens 16000 for live research
+- Results grouped by market; "Save and open" stores research_market/city/country/date_checked/live_run_id and opens detail with DIANA card
+- Tested iteration_10 (backend 15/15, frontend pass); real runs: 4-market da2302d0 (4/4/4/4), Germany-only 4b69aa06 (14 results, all Germany)
