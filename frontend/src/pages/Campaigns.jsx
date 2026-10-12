@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Plus, Trash2 } from "lucide-react";
 import { Btn, Empty, Field, Kicker, PageHead, Tag } from "../components/kit";
 import AgentRunCard from "../components/AgentRunCard";
+import BoothStory from "../components/BoothStory";
 import { create, list, recordDecision, remove, update } from "../lib/api";
 
 const FIELDS = [["brief", "Campaign brief"], ["audience", "Audience"], ["objective", "Objective"], ["insight", "Core insight"], ["concept", "Creative concept"], ["alternatives", "Alternative concepts"], ["resources", "Required resources"], ["budget", "Budget estimates & assumptions"], ["dependencies", "Dependencies"], ["risks", "Risks"], ["timeline", "Execution timeline"], ["distribution", "Distribution plan"], ["metrics", "Success metrics"], ["kill_criteria", "Kill / continuation criteria"]];
@@ -12,7 +13,7 @@ export default function Campaigns() {
   const [items, setItems] = useState([]);
   const [id, setId] = useState(null);
   const [params] = useSearchParams();
-  const load = useCallback(async () => { const d = await list("campaigns"); setItems(d); setId((c) => c || params.get("id") || d[0]?.id); }, []); // eslint-disable-line
+  const load = useCallback(async () => { const d = await list("campaigns"); setItems(d); setId((c) => c || params.get("id") || (params.get("booth") && d.find((x) => x.story)?.id) || d[0]?.id); }, []); // eslint-disable-line
   useEffect(() => { load(); }, [load]);
   const c = items.find((x) => x.id === id);
   const save = async (patch) => { await update("campaigns", id, patch); load(); };
@@ -44,7 +45,9 @@ export default function Campaigns() {
               {c.provenance && <Tag tone="blue">{c.provenance}</Tag>}
             </div>
             {c.context && <details data-testid="campaign-context-panel" open className="border border-chocolate/30 bg-paper p-3"><summary className="kicker text-tangelo cursor-pointer">Context handed over</summary><pre className="whitespace-pre-wrap font-mono text-[11px] mt-2 max-h-64 overflow-auto">{c.context}</pre></details>}
-            {/sap score/i.test(c.name) && <Link to="/strategy/brief" data-testid="campaign-to-strategy" className="block border-2 border-tangelo p-4 font-mono text-xs hover:bg-tangelo hover:text-linen transition-colors">SAP Score is now a playable prototype with a launch narrative and a measurement plan. Open the campaign brief →</Link>}
+            {c.story && <BoothStory c={c} save={save} />}
+            {/sap score/i.test(c.name) && <Link to="/strategy/brief" data-testid="campaign-to-strategy" className="block border-2 border-tangelo p-4 font-mono text-xs hover:bg-tangelo hover:text-linen transition-colors">The online SAP Score prototype has its own brief, narrative and measurement plan. Open the campaign brief →</Link>}
+            {c.story && <div id="booth-working" className="scroll-mt-32"><p className="kicker text-tangelo">Working brief and agent critiques</p><p className="font-mono text-[11px] opacity-70 mt-1">The original brief fields and the saved DIANA, CATHERINE, EDITH and ANA runs. Agent critiques are inputs to my decisions above, not substitutes for them.</p></div>}
             <div className="grid md:grid-cols-2 gap-3">
               <Field label="Campaign name"><input data-testid="campaign-name-input" className="field" defaultValue={c.name} onBlur={(e) => save({ name: e.target.value })} /></Field>
               <Field label="Event / context"><input className="field" defaultValue={c.event} onBlur={(e) => save({ event: e.target.value })} /></Field>

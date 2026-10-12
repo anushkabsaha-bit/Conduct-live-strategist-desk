@@ -399,3 +399,141 @@ async def ensure_v2(db):
     await db.strategy.update_one({"key": "measure"}, {"$set": {"experiments": [], "scenarios": SCENARIOS}})
     await db.strategy.insert_many([{"id": _id(), **FILM, "created_at": now(), "updated_at": now()}, {"id": _id(), **BRIEF, "created_at": now(), "updated_at": now()}])
     await db.meta.insert_one({"k": "showwork_seeded", "at": now()})
+
+
+# ---------- v3: SAP Score booth campaign, expanded in place ----------
+E = lambda t, why: {"t": t, "why": why}
+BOOTH = {
+    "label": "Independent, uncommissioned proposal based on public information. No event is booked, nothing is approved, and nothing has run.",
+    "why": {
+        "observation": "At a busy technology event, dozens of companies compete for the same few seconds of attention. A conventional stand asks an unfamiliar visitor to read product messaging before they have a reason to care. My working observation is that this often isn't enough to make someone stop. It's a starting assumption, not a proven claim about every event.",
+        "problem": "How can Conduct make a complicated enterprise technology problem approachable and memorable to someone who may not know the company yet?",
+        "elements": [
+            E("A physical visual attraction", "A Polaroid booth is visible from across a hall. It says 'something to do' rather than 'something to read', which is a lower bar for a stranger."),
+            E("A quick, participatory experience", "A few questions and a photo take about a minute. That's short enough to say yes to between sessions, and doing something is more memorable than being told something."),
+            E("Humour from recognisable frustrations", "Jokes about ancient macros and undocumented customisations work because practitioners live with them. The laugh should be 'that's my life', never 'look at those SAP customers'."),
+            E("A tangible object to take away", "People keep photographs. A Polaroid has a better chance of surviving the trip home than a flyer, and it carries the Conduct name with it."),
+            E("A reason to talk or share", "A funny score is easy to show a colleague. That gives the idea a chance to travel beyond the stand. It's an opportunity, not an assumed result."),
+            E("A natural opening for a conversation", "'What did you get?' is an easier first line for a Conduct team member than 'Can I tell you about our product?'. The photo earns the right to have the conversation."),
+        ],
+        "score": "The score adds curiosity. A number gives the participant something to react to, and gives other people a reason to ask what it means. It's a creative device. It doesn't examine anyone's system, measure SAP maturity or diagnose anything, and every card and every team script would say so.",
+        "conduct": [
+            {"where": "The photograph", "how": "Conduct's name and one short line about what the company does. The safest starting point is Conduct's own public wording: 'AI operating system for enterprise software'.", "src": "S4", "approval": "Any line beyond the public homepage wording needs Conduct's approval."},
+            {"where": "The booth conversation", "how": "A team member explains in a sentence or two, drawing on the public mission: helping enterprises understand how their systems actually work.", "src": "S2", "approval": "Talking points, and anything about the Freudenberg work or product capabilities, need Conduct's approval."},
+            {"where": "The QR destination", "how": "A mobile page explaining what SAP Score was, what Conduct does in plain language, links to public product information, and an optional request for a conversation.", "src": "S3", "approval": "Page copy, any product claims and the data handling for the request form need Conduct's approval."},
+        ],
+        "chain": [
+            {"step": "Attention", "intended": "The booth gives a stranger a reason to stop.", "untested": "Whether it stands out at a specific event."},
+            {"step": "Recognition", "intended": "The questions and the line on the photo feel familiar.", "untested": "Whether the humour reads as recognition rather than mockery."},
+            {"step": "Product discovery", "intended": "The photo, the conversation and the QR page explain what Conduct does.", "untested": "Whether people can say what Conduct does afterwards."},
+            {"step": "Next conversation", "intended": "Someone with a real need asks to talk.", "untested": "Whether any relevant conversations happen at all."},
+        ],
+    },
+    "journey": [
+        {"id": "A", "t": "Notice", "what": "A visitor notices the Polaroid booth among the other stands.",
+         "show": [{"k": "Visual hook", "v": "A tall Polaroid frame in cream, brown and orange, a wall of example photos, and one sign."}, {"k": "Example signage", "v": "What's your SAP Score? One minute. One photo. No sales pitch."}, {"k": "Opening line", "v": "Want to find out how haunted your SAP landscape is?"}],
+         "why": "Curiosity, a visible queue of people laughing, and a promise that it's quick. Each lowers the cost of stopping.", "safeguards": ""},
+        {"id": "B", "t": "Participate", "what": "A Conduct team member invites the visitor to answer a few playful questions. They get a score and a Polaroid-style photo.",
+         "show": [{"k": "Questions", "v": "The same three questions as the playable SAP Score prototype."}, {"k": "Experience", "v": "About a minute: answer, pose, receive the photo with the score and a line."}],
+         "why": "The visitor does something and gets something. The team member gets a natural reason to talk.",
+         "safeguards": "Every card says 'For fun. Not an assessment of your systems.' No question asks for company names or system details. The score comes only from the answers. The team script never implies a diagnosis."},
+        {"id": "C", "t": "Discover", "what": "The team member briefly explains what Conduct does. The photo carries Conduct's branding, and a QR code leads to a mobile page about the concept and the product.",
+         "show": [{"k": "On the photo", "v": "Conduct name, one approved line, QR code."}, {"k": "QR page", "v": "What SAP Score was, what Conduct does, public product information, an optional request to talk."}],
+         "why": "The participant should leave understanding the company, not just remembering the joke.", "safeguards": "Product wording limited to approved, public information."},
+        {"id": "D", "t": "Share", "what": "The participant might share the photo on LinkedIn, show a colleague or take it back to their team.",
+         "show": [{"k": "Example caption", "v": "Apparently my SAP Score is 34%. In my defence, the macro was there before me. Polaroid from the Conduct booth at [event]."}, {"k": "Digital version", "v": "A scan of their own photo, available only if they ask for it."}],
+         "why": "Sharing is a chance for the idea to travel, not an assumed result.",
+         "safeguards": "Visible photography notice at the booth. Conduct only posts photos of people with written consent. Visitors choose whether to share their own. Nothing is posted automatically. An alternative card without a photo for anyone who'd rather not be photographed."},
+        {"id": "E", "t": "Start a commercial conversation", "what": "A visitor who recognises the problem may want to talk about their own enterprise systems.",
+         "show": [{"k": "Next steps offered", "v": "Talk to someone at the booth now, a relevant resource via the QR page, or an opt-in request for follow-up."}, {"k": "Relevance signals", "v": "Works with SAP or other enterprise systems, describes a real problem (documentation, change, dependencies), has influence over that work, and asks to continue the conversation."}],
+         "why": "This is the opportunity. The photo was only the hook.",
+         "safeguards": "Not every participant is a potential customer, and a QR scan is not a lead. No follow-up without an explicit request. Notes are recorded only with consent and handled through Conduct's own data processes (to be confirmed)."},
+        {"id": "F", "t": "Follow through", "what": "After the event: recap, approved photos, follow-up with people who asked, and a review of the conversations.",
+         "steps": [
+             {"step": "Publish an event recap", "owner": "Communications (proposed: me)", "timing": "Within 48 hours", "approvals": "Conduct brand approval", "info": "Approved photos, what actually happened at the booth"},
+             {"step": "Share approved photographs", "owner": "Communications with the event team", "timing": "Within a week", "approvals": "Written consent from each person pictured", "info": "Consent records"},
+             {"step": "Follow up with people who asked", "owner": "To be decided by Conduct (sales or founders)", "timing": "Within five working days", "approvals": "Consent captured at the booth", "info": "Conversation notes, what they asked for"},
+             {"step": "Review the conversations generated", "owner": "Communications with sales", "timing": "Two weeks after the event", "approvals": "None beyond data handling", "info": "Conversation log and qualification notes"},
+         ], "show": [], "why": "", "safeguards": ""},
+    ],
+    "recruitment": {
+        "label": "Proposed extension. Not an existing Conduct recruitment practice.",
+        "steps": [
+            {"t": "Meet Conduct", "v": "Someone takes home their SAP Score Polaroid from a hackathon or technology event."},
+            {"t": "Months later", "v": "They see a role at Conduct and decide to apply."},
+            {"t": "Optional question", "v": "The application asks: 'Have you met Conduct at an event or hackathon?' They can name the event or upload their old Polaroid if they want to."},
+            {"t": "A conversation starter", "v": "If it comes up, it's a story about how they first met the company. It doesn't prove ability or suitability."},
+            {"t": "If hired, and only with consent", "v": "Their photo joins a fridge or display alongside other Conductors, with the story of how their connection began."},
+        ],
+        "value": ["The event experience stays memorable long after the event.", "A physical photo creates a small, personal connection with the brand.", "Future recruitment communications get a distinctive human story.", "A photo can tell the story of how a future colleague first met Conduct."],
+        "safeguards": ["Entirely optional. Attendance, participation or owning a photo is never a requirement.", "Not scored and never used as a selection filter. No preferential treatment.", "Keep the answer out of screening decisions. Share it with interviewers only after a decision, if at all.", "Uploaded photos follow Conduct's data retention policy. Display only with consent, removable at any time."],
+        "needs": "Approval from Conduct's people or talent team and a privacy check on the optional upload.",
+    },
+    "commercial": {
+        "chain": ["Event attention", "Participation", "Recognition of an enterprise problem", "Understanding what Conduct does", "Relevant conversation", "Qualified opportunity", "Potential customer"],
+        "point": "A Polaroid doesn't sell enterprise software. The idea is that a distinctive interaction could create an opening for a more meaningful conversation.",
+        "ambition": "Contributing to two or three new clients is an ambition worth evaluating, not a prediction.",
+        "must_be_true": ["The event audience includes people who own or influence enterprise systems.", "Some booth interactions turn into meaningful conversations.", "Some of those people have a relevant product need.", "Follow-up is fast, personal and handled by the right person.", "Sales qualification separates interest from real opportunity.", "Enough time passes to allow for a realistic enterprise sales cycle, which may be many months."],
+        "failures": [
+            {"risk": "The joke overshadows the company", "test": "Ask a few participants what Conduct does as they leave.", "change": "Make the Conduct line on the photo bigger and the team's one-sentence explanation part of handing it over."},
+            {"risk": "People take photos but never understand the product", "test": "Compare QR page engagement with photos taken. Check what people say in follow-up.", "change": "Move the product explanation into the moment the photo develops, which is a natural pause."},
+            {"risk": "The audience enjoys it but contains few relevant buyers", "test": "Log relevance signals for each conversation, with consent.", "change": "Choose a different event, or run it at a smaller practitioner meetup first."},
+            {"risk": "Follow-up is too weak to turn interest into conversations", "test": "Track time to follow-up and response rate for people who asked.", "change": "Agree owners and a follow-up template before the event, not after."},
+        ],
+    },
+    "phases": [
+        {"phase": "Select and validate the event and audience", "deliverables": "A shortlist of London events with audience evidence (from Opportunity Radar)", "owner": "Me, with Conduct's events lead", "deps": "Event dates, audience data, stand costs", "decision": "Is the audience relevant enough to justify a booth?", "who": "both"},
+        {"phase": "Verify the product message and scoring concept with Conduct", "deliverables": "Approved one-line description, QR page copy, card disclaimer", "owner": "Conduct product and marketing", "deps": "Conduct's time and sign-off", "decision": "Can we say this, and is the humour on-brand?", "who": "conduct"},
+        {"phase": "Prototype the booth, questions, photo and QR destination", "deliverables": "Playable SAP Score (exists), card mock-up, QR page draft, booth sketch", "owner": "Me", "deps": "None for the prototype", "decision": "Is it quick, clear and funny?", "who": "independent"},
+        {"phase": "Test whether people get both the joke and the company", "deliverables": "Five to eight people outside Conduct play it, then say what Conduct does", "owner": "Me", "deps": "Volunteers", "decision": "Do they remember the company, not just the joke?", "who": "independent"},
+        {"phase": "Confirm costs, permissions, accessibility, staffing, logistics and consent", "deliverables": "Budget, venue rules, step-free access, no-photo alternative, consent forms, staffing rota", "owner": "Conduct events and operations", "deps": "Budget approval, venue", "decision": "Is it feasible and responsible at this event?", "who": "conduct"},
+        {"phase": "Run the activation, only after approvals", "deliverables": "Signed-off approvals checklist, the booth on the day", "owner": "Conduct event team", "deps": "Every previous phase", "decision": "Go or no-go", "who": "conduct"},
+        {"phase": "Follow up and distribute approved content", "deliverables": "Follow-ups to people who asked, recap, consented photos", "owner": "Sales and communications", "deps": "Consent records, conversation notes", "decision": "Who gets which follow-up?", "who": "conduct"},
+        {"phase": "Evaluate the commercial and recruitment learning", "deliverables": "Results recorded on the Did it work? page against the original thresholds", "owner": "Me, with Conduct", "deps": "Real results", "decision": "Proceed, revise or stop", "who": "both"},
+    ],
+    "budget": [{"item": i, "low": "", "high": "", "note": ""} for i in ["Stand space or share of a partner stand", "Instant camera, film or printing", "Booth build and signage", "Staffing (people x days)", "QR landing page", "Travel and incidentals"]],
+    "decisions": [{"q": q, "a": "", "example": ex} for q, ex in [
+        ("Why I chose this idea over a conventional stand", "Illustrative example: a stand asks for attention; a booth gives people something to do first."),
+        ("Why the Polaroid is the right creative mechanism", "Illustrative example: it's physical, quick and leaves something behind."),
+        ("Why the score needs to connect to Conduct's actual product", "Illustrative example: otherwise people remember a joke, not a company."),
+        ("Why I included the recruitment extension", "Illustrative example: the same object can carry a story long after the event."),
+        ("Which audience I would prioritise first", "Illustrative example: SAP practitioners, because they recognise the problem fastest."),
+        ("What I would test before committing to the full activation", "Illustrative example: whether five people outside Conduct can say what it does after playing."),
+        ("What I would deliberately leave out", "Illustrative example: prizes, lead capture at the camera, anything that feels like a sales trap."),
+        ("What requires input or approval from Conduct", "Illustrative example: the product line, the QR page, budget and consent handling."),
+        ("What evidence would change my mind", "Illustrative example: people consistently can't say what Conduct does afterwards."),
+    ]],
+    "verdict": "", "verdict_reason": "",
+}
+
+BOOTH_TIMELINE = "1. Select and validate the event. 2. Verify message and scoring with Conduct. 3. Prototype. 4. Test understanding. 5. Confirm costs, permissions, accessibility, staffing and consent. 6. Run only after approvals. 7. Follow up. 8. Evaluate. See the Execution chapter for owners and decisions."
+BOOTH_ALTS = "Spot the drift visual series. Practitioner story prompts ('the oldest decision in your system'). A conventional stand with a product demo. See the campaign brief for the comparison."
+
+BM = lambda id, name, why, how, can, cannot, baseline, period, pos, neg, dec, tracking="manual", area="Booth activation": {**M(id, area, name, why, how, baseline, pos, neg, dec, tracking), "can": can, "cannot": cannot, "period": period, "campaign": "booth"}
+BOOTH_METRICS = [
+    BM("booth_attention", "Attention and booth participation", "Shows whether the booth gives people a reason to stop.", "Hand count of people who stop and of people who take part, per hour.", "Whether the booth draws people in at this event.", "Whether they were relevant, or what they understood.", "Footfall past the stand in the first hour, counted on the day.", "Event day", "A steady queue from the intended roles.", "People walk past or stop only to look.", "Change the signage, position or opening line."),
+    BM("booth_completion", "Participation completion", "Shows whether the experience is quick and clear enough to finish.", "Photos printed divided by people who started.", "Whether the format works in a busy hall.", "Whether anyone learned anything about Conduct.", "None. Set a planning assumption.", "Event day", "Nearly everyone who starts finishes.", "People abandon halfway.", "Cut a question or speed up printing."),
+    BM("booth_qr", "QR scans and meaningful product-page engagement", "Connects the photo to the product.", "Scans from a booth-specific QR link, then time on page and clicks to product information.", "Whether people were curious enough to look up Conduct.", "Whether they're buyers. A scan isn't a lead.", "Normal traffic to the page before the event.", "Event day plus 14 days", "A meaningful share of photo-takers explore the product page.", "Scans with no further engagement.", "Rewrite the QR page or the line on the photo.", "external"),
+    BM("booth_shares", "Voluntary shares", "Shows whether the photo travels beyond the stand.", "Public posts mentioning the booth or showing the photo, logged by hand.", "Whether the photo is worth showing to others.", "Anything about reach among buyers.", "None. Record the first event as the baseline.", "Event day plus 7 days", "Some participants share it unprompted.", "Nobody shares, or shares get no response.", "Check whether the lines are too risky to post."),
+    BM("booth_conversations", "Relevant enterprise conversations", "The point of the booth: conversations with people who have the problem.", "A consented log of conversations meeting the relevance signals.", "Whether the booth opens real conversations.", "Whether they'll become opportunities.", "Conversations at a comparable Conduct event stand, if Conduct has the data.", "Event day", "Several conversations with clear relevance signals.", "Lots of laughter, no relevant conversations.", "Review the audience fit and the team script."),
+    BM("booth_qualified", "Qualified opportunities", "Shows whether conversations turn into something sales would pursue.", "Opportunities that sales qualify and link back to the booth.", "Whether interest survived follow-up.", "Revenue, or whether the booth caused the deal.", "Conduct's usual rate from events, if available.", "90 days after the event", "At least one qualified opportunity clearly started at the booth.", "No opportunities after real follow-up.", "Decide whether the event, the follow-up or the concept failed."),
+    BM("booth_outcomes", "Actual commercial outcomes", "The ambition: contributing to two or three new clients.", "Closed deals where the booth is recorded as the first touch.", "Whether the ambition was plausible.", "Clean causation, since enterprise sales have many touches.", "Conduct's sales cycle length and win rates (internal).", "6 to 12 months", "A deal where the booth is credibly part of the story.", "No outcomes after a full sales cycle.", "Judge cost against outcomes and decide whether to repeat."),
+    BM("booth_recruitment", "Recruitment interest and future colleague stories", "Tracks the recruitment extension separately from commercial results.", "Optional answers to 'Have you met Conduct at an event?', counted only in aggregate.", "Whether the event is remembered by future applicants.", "Anything about candidate quality. It must never affect selection.", "None. It starts at zero.", "12 months or more", "Some applicants mention the booth and some hires share their photo with consent.", "Nobody ever mentions it.", "Keep or drop the optional question.", area="Booth: recruitment (tracked separately)"),
+]
+
+
+async def ensure_v3(db):
+    if await db.meta.find_one({"k": "booth_seeded"}):
+        return
+    c = await db.campaigns.find_one({"name": "SAP Score booth"})
+    if c and "story" not in c:
+        patch = {"story": BOOTH}
+        if not (c.get("timeline") or "").strip():
+            patch["timeline"] = BOOTH_TIMELINE
+        if not (c.get("alternatives") or "").strip():
+            patch["alternatives"] = BOOTH_ALTS
+        await db.campaigns.update_one({"id": c["id"]}, {"$set": patch})
+    m = await db.strategy.find_one({"key": "measure"})
+    if m and not any(x.get("campaign") == "booth" for x in m["metrics"]):
+        await db.strategy.update_one({"key": "measure"}, {"$push": {"metrics": {"$each": BOOTH_METRICS}}})
+    await db.meta.insert_one({"k": "booth_seeded", "at": now()})

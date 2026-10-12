@@ -48,6 +48,7 @@ async def startup():
     if await db.meta.find_one({"k": "seeded"}):
         await ST.ensure(db)
         await ST.ensure_v2(db)
+        await ST.ensure_v3(db)
         return
     monday = S.week_monday()
     await db.calendar.insert_many(S.calendar_blocks(monday))
@@ -61,6 +62,7 @@ async def startup():
     await db.meta.insert_one({"k": "seeded", "at": now()})
     await ST.ensure(db)
     await ST.ensure_v2(db)
+    await ST.ensure_v3(db)
 
 
 @api.get("/")

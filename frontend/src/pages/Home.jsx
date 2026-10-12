@@ -24,12 +24,14 @@ export default function Home() {
       </header>
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 border-t-2 border-chocolate" data-testid="home-entries">
         {ENTRIES.map((e, i) => (
-          <Link key={e.n} to={e.to} data-testid={`home-entry-${e.n}`} className={`group p-6 md:p-8 border-b-2 border-chocolate sm:[&:nth-child(odd)]:border-r-2 lg:border-r-2 lg:last:border-r-0 transition-colors duration-300 animate-rise ${i === 2 ? "bg-chocolate text-linen hover:bg-ink" : "hover:bg-paper"}`} style={{ animationDelay: `${180 + i * 70}ms` }}>
+          <div key={e.n} className={`group relative p-6 md:p-8 border-b-2 border-chocolate sm:[&:nth-child(odd)]:border-r-2 lg:border-r-2 lg:last:border-r-0 transition-colors duration-300 animate-rise ${i === 2 ? "bg-chocolate text-linen hover:bg-ink" : "hover:bg-paper"}`} style={{ animationDelay: `${180 + i * 70}ms` }}>
+            <Link to={e.to} data-testid={`home-entry-${e.n}`} className="absolute inset-0" aria-label={e.t} />
             <div className="flex justify-between items-start mb-14"><span className="font-mono text-xs text-tangelo">{e.n}</span><ArrowUpRight className="w-5 h-5 transition-transform group-hover:-translate-y-1 group-hover:translate-x-1" /></div>
             <p className="font-display uppercase text-3xl xl:text-4xl leading-none mb-4">{e.t}</p>
             <p className="font-mono text-xs leading-relaxed opacity-80 mb-6">{e.d}</p>
             <span className="kicker text-tangelo">{e.k}</span>
-          </Link>
+            {e.n === "03" && <Link to="/campaigns?booth=1" data-testid="home-booth-link" className="relative z-10 inline-block mt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-botticelli hover:text-tangelo">The booth campaign</Link>}
+          </div>
         ))}
       </div>
       <div className="px-5 md:px-10 py-8 bg-ink text-linen flex flex-wrap items-baseline gap-x-6 gap-y-2" data-testid="home-how-i-work">

@@ -86,7 +86,7 @@ function MetricRow({ m, set, locked, commit }) {
       </div>
       {open && (
         <div className="grid md:grid-cols-5 gap-4 pb-4 pl-6 animate-rise font-mono text-[11px] leading-relaxed">
-          {[["Why it matters", m.why], ["How it's measured", m.how], ["Baseline needed", m.baseline], ["Signals", `Positive: ${m.positive}\nNegative: ${m.negative}`], ["Decision that could follow", m.decision]].map(([l, v]) => <div key={l}><p className="kicker text-tangelo mb-1">{l}</p><p className="whitespace-pre-line">{v}</p></div>)}
+          {[["Why it matters", m.why], ["How it's measured", m.how], ["Baseline needed", m.baseline], ["Signals", `Positive: ${m.positive}\nNegative: ${m.negative}`], ["Decision that could follow", m.decision], ...(m.can ? [["Can establish", m.can], ["Cannot establish", m.cannot], ["Observation period", m.period]] : [])].map(([l, v]) => <div key={l}><p className="kicker text-tangelo mb-1">{l}</p><p className="whitespace-pre-line">{v}</p></div>)}
           <div className="md:col-span-5 grid md:grid-cols-2 gap-3">
             <input data-testid={`threshold-note-${m.id}`} disabled={locked} className="field !py-1.5 !text-xs" placeholder="Why this assumption?" value={m.threshold_note} onChange={(e) => set({ threshold_note: e.target.value })} onBlur={commit} />
             <input data-testid={`actual-note-${m.id}`} disabled={!locked} className="field !py-1.5 !text-xs" placeholder="Where the result came from" value={m.actual_note} onChange={(e) => set({ actual_note: e.target.value })} onBlur={commit} />
@@ -124,7 +124,7 @@ function Metrics({ doc, save }) {
       </div>
       <div className="hidden md:grid grid-cols-[1.3fr_1fr_1fr_1fr] gap-3 kicker opacity-60 pb-2 border-b-2 border-chocolate"><span>Metric</span><span>Proposed threshold</span><span>Actual result</span><span>Against assumption</span></div>
       {areas.map((a) => (
-        <div key={a}><p className="font-display uppercase text-xl pt-5 pb-1">{a}</p>
+        <div key={a} id={a.startsWith("Booth activation") ? "booth" : undefined} className="scroll-mt-32"><p className="font-display uppercase text-xl pt-5 pb-1">{a}{a.startsWith("Booth") && <Link to="/campaigns?booth=1" className="ml-3 font-mono text-[10px] normal-case tracking-normal text-tangelo underline-grow">from the SAP Score booth campaign</Link>}</p>
           {ms.map((m, i) => m.area === a && <MetricRow key={m.id} m={m} locked={locked} commit={commit} set={(p) => setMs(ms.map((x, j) => (j === i ? { ...x, ...p } : x)))} />)}
         </div>
       ))}
@@ -173,6 +173,7 @@ function Failure({ doc, save }) {
 export default function MeasurePage() {
   const { docs, error, save, reload } = useStrategy();
   const doc = docs?.measure;
+  useEffect(() => { if (doc && window.location.hash) setTimeout(() => document.querySelector(window.location.hash)?.scrollIntoView({ behavior: "smooth" }), 150); }, [!!doc]); // eslint-disable-line
   return (
     <div data-testid="measure-page">
       <StrategyTabs />
