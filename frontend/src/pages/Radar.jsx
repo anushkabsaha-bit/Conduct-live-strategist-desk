@@ -10,6 +10,61 @@ import { OPP_STATUS, VERIF, todayISO } from "../lib/meta";
 
 const TYPES = ["developer_conference", "tech_conference", "enterprise_sap_event", "hackathon", "community_idea", "community", "podcast_media", "roundtable", "partnership", "other"];
 const MARKETS = ["UK", "Germany / Europe", "US", "Other"];
+const PRIORITY = ["London, United Kingdom", "New York City, United States", "San Francisco Bay Area, United States", "Germany (Berlin and other tech hubs)"];
+const SHORT = { "London, United Kingdom": "London", "New York City, United States": "New York City", "San Francisco Bay Area, United States": "the San Francisco Bay Area", "Germany (Berlin and other tech hubs)": "Germany" };
+const PLACES = { London: /london|\buk\b|united kingdom|britain/i, "New York City": /new york|nyc/i, "San Francisco Bay Area": /san francisco|bay area|silicon valley/i, Germany: /german|berlin|munich|hamburg|frankfurt|walldorf/i };
+const joinList = (a) => (a.length < 2 ? a.join("") : `${a.slice(0, -1).join(", ")} and ${a[a.length - 1]}`);
+const autoQuery = (p) => `Find ${p.types} across ${joinList((p.markets.length ? p.markets : PRIORITY).map((m) => SHORT[m] || m))} over the ${p.date_range}.`;
+const withQuery = (p) => (p.queryEdited ? p : { ...p, query: autoQuery(p) });
+const loadPlan = () => {
+  const base = { markets: PRIORITY, extra: [], types: "developer conferences, hackathons, enterprise technology events and relevant communities", date_range: "next 12 to 18 months", queryEdited: false };
+  try { const s = JSON.parse(localStorage.getItem("radarPlan")); if (s?.markets) return { ...base, ...s }; } catch {}
+  return withQuery(base);
+};
+const toMarket = (m = "") => (/london|united kingdom|\buk\b/i.test(m) ? "UK" : /german|berlin|europe/i.test(m) ? "Germany / Europe" : /new york|san francisco|united states|\bus\b/i.test(m) ? "US" : "Other");
+const runMarkets = (r) => { const m = r.input?.markets; return Array.isArray(m) ? m : m ? String(m).split(",").map((x) => x.trim()).filter(Boolean) : []; };
+const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+const groupByMarket = (opps, markets = []) => {
+  const g = {};
+  opps.forEach((x, i) => { const k = markets.find((m) => m === x.market) || markets.find((m) => (x.market || "").toLowerCase().includes((SHORT[m] || m).replace("the ", "").toLowerCase())) || x.market || "Unspecified market"; (g[k] = g[k] || []).push({ x, i }); });
+  return [...markets.filter((m) => g[m]).map((m) => [m, g[m]]), ...Object.entries(g).filter(([k]) => !markets.includes(k))];
+};
+
+function MarketPicker({ plan, setPlan }) {
+  const [add, setAdd] = useState("");
+  const all = [...PRIORITY, ...(plan.extra || [])];
+  const set = (markets) => setPlan(withQuery({ ...plan, markets }));
+  const toggle = (m) => set(plan.markets.includes(m) ? plan.markets.filter((x) => x !== m) : all.filter((x) => plan.markets.includes(x) || x === m));
+  return (
+    <div data-testid="market-picker">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-2"><span className="kicker">Markets · searched together, priorities not limits</span>
+        <span className="flex gap-3"><button data-testid="markets-all" onClick={() => set(PRIORITY)} className="font-mono text-[10px] uppercase tracking-[0.12em] underline-grow">All four priority markets</button><button data-testid="markets-reset-query" onClick={() => setPlan({ ...plan, queryEdited: false, query: autoQuery(plan) })} className="font-mono text-[10px] uppercase tracking-[0.12em] underline-grow">Rewrite question from markets</button></span></div>
+      <div className="flex flex-wrap gap-2">
+        {all.map((m) => { const on = plan.markets.includes(m); return (
+          <span key={m} className={`inline-flex items-stretch border-2 ${on ? "border-chocolate bg-chocolate text-linen" : "border-chocolate/30"}`}>
+            <button data-testid={`market-${slug(m)}`} aria-pressed={on} onClick={() => toggle(m)} className="px-3 py-1.5 font-mono text-[11px]">{on ? "✓ " : ""}{m}</button>
+            <button data-testid={`market-only-${slug(m)}`} onClick={() => set([m])} title="Search only this market" className={`px-2 font-mono text-[9px] uppercase border-l ${on ? "border-linen/30" : "border-chocolate/30"} hover:text-tangelo`}>Only</button>
+            {!PRIORITY.includes(m) && <button data-testid={`market-remove-${slug(m)}`} onClick={() => setPlan(withQuery({ ...plan, extra: plan.extra.filter((x) => x !== m), markets: plan.markets.filter((x) => x !== m) }))} className="px-2 text-[11px] hover:text-tangelo">×</button>}
+          </span>); })}
+        <span className="inline-flex"><input data-testid="market-add-input" className="field !w-40 !py-1 !text-[11px]" placeholder="Add a city or market" value={add} onChange={(e) => setAdd(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && add.trim() && !all.includes(add.trim())) { setPlan(withQuery({ ...plan, extra: [...(plan.extra || []), add.trim()], markets: [...plan.markets, add.trim()] })); setAdd(""); } }} /></span>
+      </div>
+      {!plan.markets.length && <p className="font-mono text-[10px] text-tangelo mt-1">No market selected, so the search covers all four priority markets.</p>}
+    </div>
+  );
+}
+
+function QueryCheck({ plan, setPlan }) {
+  const sel = (plan.markets.length ? plan.markets : PRIORITY).join(" ");
+  const missing = Object.entries(PLACES).filter(([, re]) => re.test(plan.query) && !re.test(sel)).map(([k]) => k);
+  if (!missing.length) return <p className="font-mono text-[10px] text-chocolate/60 mt-1" data-testid="query-consistent">CATHERINE searches exactly the selected markets.</p>;
+  return <p className="font-mono text-[11px] text-tangelo mt-1" data-testid="query-mismatch">Your question mentions {missing.join(", ")}, which isn't selected. CATHERINE will search only the selected markets. <button onClick={() => setPlan({ ...plan, queryEdited: false, query: autoQuery(plan) })} className="underline">Rewrite the question</button></p>;
+}
+
+function PerMarket({ o, r }) {
+  const pm = o.per_market || [];
+  if (!pm.length) return null;
+  return <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2" data-testid="per-market">{pm.map((p, i) => <div key={i} className={`p-2 border font-mono text-[11px] ${p.found ? "border-chocolate/30" : "border-tangelo"}`}><p className="font-bold">{p.market}</p><p>{p.found ? `${p.found} found` : "Nothing verifiable found"}</p>{p.note && <p className="opacity-70">{p.note}</p>}</div>)}</div>;
+}
 const BLANK = { name: "", type: "tech_conference", market: "UK", location: "", start_date: "", end_date: "", deadline: "Unknown", source_url: "", verification: "needs_validation", audience: "", relevance: "", cost: "Unknown", notes: "", status: "new", contacts: "None publicly verified" };
 
 function OppForm({ onSaved }) {
@@ -101,7 +156,8 @@ export default function Radar() {
   const [cmp, setCmp] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [selId, setSelId] = useState(null);
-  const [plan, setPlan] = useState({ query: "Could Conduct be represented at a relevant developer event in Germany next year?", markets: "Germany / Europe", types: "developer conferences, hackathons, communities", date_range: "next 12–18 months" });
+  const [plan, setPlanRaw] = useState(loadPlan);
+  const setPlan = (p) => { setPlanRaw(p); localStorage.setItem("radarPlan", JSON.stringify(p)); };
   const load = useCallback(() => list("opportunities").then(setItems), []);
   useEffect(() => { load(); }, [load]);
   const filtered = useMemo(() => items.filter((o) =>
@@ -126,36 +182,43 @@ export default function Radar() {
         <div>
           <Kicker n="A">Research request · CATHERINE</Kicker>
           <div className="grid md:grid-cols-4 gap-3 mb-4">
-            <div className="md:col-span-4"><Field label="Question"><input data-testid="research-query-input" className="field" value={plan.query} onChange={(e) => setPlan({ ...plan, query: e.target.value })} /></Field></div>
-            <Field label="Markets"><input className="field" value={plan.markets} onChange={(e) => setPlan({ ...plan, markets: e.target.value })} /></Field>
-            <Field label="Opportunity types"><input className="field" value={plan.types} onChange={(e) => setPlan({ ...plan, types: e.target.value })} /></Field>
-            <Field label="Date range"><input className="field" value={plan.date_range} onChange={(e) => setPlan({ ...plan, date_range: e.target.value })} /></Field>
+            <div className="md:col-span-4"><MarketPicker plan={plan} setPlan={setPlan} /></div>
+            <div className="md:col-span-4"><Field label="Question"><input data-testid="research-query-input" className="field" value={plan.query} onChange={(e) => setPlan({ ...plan, query: e.target.value, queryEdited: true })} /></Field><QueryCheck plan={plan} setPlan={setPlan} /></div>
+            <div className="md:col-span-2"><Field label="Opportunity types"><input data-testid="research-types-input" className="field" value={plan.types} onChange={(e) => setPlan(withQuery({ ...plan, types: e.target.value }))} /></Field></div>
+            <div className="md:col-span-2"><Field label="Date range"><input data-testid="research-date-input" className="field" value={plan.date_range} onChange={(e) => setPlan(withQuery({ ...plan, date_range: e.target.value }))} /></Field></div>
           </div>
-          <AgentRunCard agent="catherine" task="catherine.live_research" label="Live search" testid="live-research" getInput={() => ({ ...plan, today: todayISO() })} hint="Runs real web searches. Takes 1 to 3 minutes."
+          <AgentRunCard agent="catherine" task="catherine.live_research" label={`Live search · ${plan.markets.length === PRIORITY.length && PRIORITY.every((m) => plan.markets.includes(m)) ? "all four priority markets" : plan.markets.join(", ") || "all four priority markets"}`} testid="live-research" getInput={() => ({ query: plan.query, markets: plan.markets.length ? plan.markets : PRIORITY, types: plan.types, date_range: plan.date_range, today: todayISO() })} hint="Runs real web searches, at least a few per selected market. Takes 1 to 3 minutes."
             render={(o, r) => (
               <div className="space-y-4" data-testid="live-results">
                 <p className="font-mono text-xs"><Claim text={o.query_interpreted} /></p>
-                <p className="font-mono text-[11px] text-chocolate/60">Searched for: {(o.searched_for || []).join(" · ")}</p>
-                {(o.opportunities || []).map((x, i) => {
+                <p className="font-mono text-[11px] text-chocolate/60" data-testid="live-searched-markets">Markets searched: {runMarkets(r).join(" · ") || "not recorded"} · {r.input?.date_range}</p>
+                <PerMarket o={o} r={r} />
+                {groupByMarket(o.opportunities || [], runMarkets(r)).map(([mk, list]) => (<div key={mk} className="space-y-2" data-testid={`live-group-${slug(mk)}`}><p className="font-display uppercase text-xl border-b-2 border-chocolate pb-1">{mk} <span className="font-mono text-[10px] text-chocolate/60 normal-case">{list.length} found</span></p>
+                {list.map(({ x, i }) => {
                   const saved = items.some((it) => it.source_url === x.source_url && it.name === x.name);
                   return (
                     <div key={i} className="border border-chocolate/30 p-3 grid md:grid-cols-[1fr_auto] gap-3" data-testid={`live-result-${i}`}>
                       <div className="font-mono text-xs space-y-1">
                         <p className="font-bold text-sm">{x.name} <span className={`ml-1 font-mono text-[9px] tracking-[0.12em] uppercase px-1.5 py-0.5 ${x.source_type === "official" ? VERIF.live_official.cls : VERIF.live_secondary.cls}`}>{x.source_type === "official" ? "Official source" : "Secondary source, verify"}</span></p>
-                        <p>{x.location} · {x.market} · <b>Dates:</b> {x.start_date}{x.end_date && x.end_date !== x.start_date ? ` to ${x.end_date}` : ""} · <b>Deadline:</b> {x.deadline} · <b>Cost:</b> {x.cost}</p>
+                        <p>{[x.city, x.country].filter(Boolean).join(", ") || x.location || "Location not found"} · <b>Dates:</b> {x.start_date}{x.end_date && x.end_date !== x.start_date ? ` to ${x.end_date}` : ""} · <b>Deadline:</b> {x.deadline} · <b>Cost:</b> {x.cost_source ? <a href={x.cost_source} target="_blank" rel="noreferrer" className="underline">{x.cost}</a> : "not found in a source"}</p>
+                        {x.audience && <p className="text-chocolate/80"><span className="text-tangelo">Audience · </span>{x.audience}</p>}
+                        <p className="text-chocolate/80"><span className="text-tangelo">Participation · </span>{x.participation_options || "not found"}</p>
                         <p className="text-chocolate/80"><span className="text-tangelo">Evidence · </span>{x.evidence}</p>
                         <p className="text-chocolate/80"><span className="text-tangelo">Why Conduct · </span>{x.why_relevant}</p>
                         {x.unknowns?.length > 0 && <p className="text-chocolate/60">Unknown: {x.unknowns.join("; ")}</p>}
+                        {x.next_action && <p className="text-chocolate/80"><span className="text-tangelo">Next · </span>{x.next_action}</p>}
                         <a href={x.source_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-tangelo underline-grow">{x.source_url} <ExternalLink className="w-3 h-3" /></a>
+                        <p className="text-chocolate/50">Checked {x.date_checked || r.created_at.slice(0, 10)}</p>
                       </div>
                       <Btn variant="line" className="!py-1 self-start" data-testid={`live-save-${i}`} disabled={saved} onClick={async () => {
                         const dt = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(v || "") ? v : "");
-                        await create("opportunities", { ...BLANK, name: x.name, type: TYPES.includes(x.type) ? x.type : "other", market: MARKETS.includes(x.market) ? x.market : "Other", location: x.location, start_date: dt(x.start_date), end_date: dt(x.end_date), deadline: x.deadline, cost: x.cost, source_url: x.source_url, verification: x.source_type === "official" ? "live_official" : "live_secondary", audience: x.audience, relevance: x.why_relevant, participation: x.participation_options, next_action: x.next_action, notes: `Live search ${r.created_at.slice(0, 10)} (run ${r.id.slice(0, 8)}). Evidence: ${x.evidence}. Unknown: ${(x.unknowns || []).join("; ")}`, source_checked: `${r.created_at.slice(0, 10)} (live web search)` });
-                        toast.success("Saved to the radar with its source and unknowns"); load();
-                      }}>{saved ? "Saved" : "Save to radar"}</Btn>
+                        const rec = await create("opportunities", { ...BLANK, name: x.name, type: TYPES.includes(x.type) ? x.type : "other", market: toMarket(x.market), research_market: x.market, city: x.city || "", country: x.country || "", date_checked: x.date_checked || r.created_at.slice(0, 10), live_run_id: r.id, unknowns: x.unknowns || [], cost_source: x.cost_source || "", location: [x.city, x.country].filter(Boolean).join(", ") || x.location, start_date: dt(x.start_date), end_date: dt(x.end_date), deadline: x.deadline, cost: x.cost, source_url: x.source_url, verification: x.source_type === "official" ? "live_official" : "live_secondary", audience: x.audience, relevance: x.why_relevant, participation: x.participation_options, next_action: x.next_action, notes: `Live search ${r.created_at.slice(0, 10)} (run ${r.id.slice(0, 8)}). Evidence: ${x.evidence}. Unknown: ${(x.unknowns || []).join("; ")}`, source_checked: `${r.created_at.slice(0, 10)} (live web search)` });
+                        toast.success("Saved with its source, location and unknowns. Opening it so you can pass it to DIANA."); await load(); setSelId(rec.id); setTimeout(() => document.querySelector("[data-testid^=opp-detail]")?.scrollIntoView({ behavior: "smooth" }), 300);
+                      }}>{saved ? "Saved" : "Save and open"}</Btn>
                     </div>
                   );
-                })}
+                })}</div>))}
+                {!(o.opportunities || []).length && <Note>No verifiable opportunities came back for these markets. That's a real result, not an error. Try a wider date range or different types.</Note>}
                 {o.could_not_find?.length > 0 && <div><p className="kicker text-tangelo mb-1">Could not find</p>{o.could_not_find.map((x, i) => <p key={i} className="font-mono text-xs">· {x}</p>)}</div>}
                 {o.caveats && <Note>{o.caveats}</Note>}
               </div>

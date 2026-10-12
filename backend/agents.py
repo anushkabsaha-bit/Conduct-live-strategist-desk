@@ -47,7 +47,7 @@ AGENT_LAYERS = {
     "ana": "ANA layer: coordinate, do not do all the specialist work yourself. When you recommend specialist work, name the agent and phrase it as a proposal. Weigh impact, urgency, dependencies, confidence and effort; do not label everything urgent; explain trade-offs.",
     "agatha": "AGATHA layer: the dataset contains short descriptions and engagement counts only (no full post text, no impressions, no dates, no formats). Cite post ids (e.g. P12) for every evidence-based claim. If a word limit is given, enforce it; if not, do not invent a length rule unless clearly labelled [HYPOTHESIS]. With 38 rows and confounders (author, reposts, external amplification), state when the sample is too small.",
     "berdine": "BERDINE layer: no internal Conduct style guide has been supplied. Any voice judgement is against an INFERRED VOICE PROFILE built from the original prompt and public Conduct communications; say so. Preserve the author's intent.",
-    "catherine": "CATHERINE layer: research scope covers the UK, Germany/Europe, New York/US and other markets with evidence. Live web search is enabled only for tasks that say so. Otherwise work only from opportunity records supplied (with their source URLs and verification status) and clearly mark anything else as an UNVERIFIED LEAD to check on the official organiser site. Never state dates, deadlines, costs, speakers or contacts that are not in the supplied record.",
+    "catherine": "CATHERINE layer: priority markets are London (UK), New York City (US), the San Francisco Bay Area (US) and Germany (Berlin and other relevant tech hubs such as Munich, Hamburg, Frankfurt, Walldorf). They are priorities, not a restriction: an unusually valuable opportunity elsewhere may be surfaced and labelled as outside the selected markets. When a task gives INPUT.markets, those selected markets are authoritative. Live web search is enabled only for tasks that say so. Otherwise work only from opportunity records supplied (with their source URLs and verification status) and clearly mark anything else as an UNVERIFIED LEAD to check on the official organiser site. Never state dates, deadlines, costs, speakers or contacts that are not in the supplied record.",
     "diana": "DIANA layer: clarify before polishing. Treat any SAP Score, joke, statistic or provocative claim as an event experience, never a factual statement about SAP or its customers. Budget figures must be ranges with explicit assumptions or marked unknown.",
     "edith": "EDITH layer: ask focused questions before building a narrative. Never invent customer success, metrics, testimonials or product capabilities. Separate verified facts from open questions, and what can be said publicly from what needs permission.",
 }
@@ -81,9 +81,10 @@ WEB_SEARCH_TASKS = {"catherine.live_research", "catherine.event_audience"}
 
 
 async def llm_stream(system, text, session_id, web=False):
-    chat = LlmChat(api_key=os.environ["EMERGENT_LLM_KEY"], session_id=session_id, system_message=system).with_model(*MODEL).with_params(max_tokens=8000)
+    chat = LlmChat(api_key=os.environ["EMERGENT_LLM_KEY"], session_id=session_id, system_message=system).with_model(*MODEL).with_params(max_tokens=16000 if isinstance(web, int) and not isinstance(web, bool) else 8000)
     if web:
-        chat = chat.with_tools([{"type": "web_search_20250305", "name": "web_search", "max_uses": 6}])
+        uses = web if isinstance(web, int) and not isinstance(web, bool) else 6
+        chat = chat.with_tools([{"type": "web_search_20250305", "name": "web_search", "max_uses": uses}])
     async for ev in chat.stream_message(UserMessage(text=text)):
         if isinstance(ev, TextDelta):
             yield ev.content

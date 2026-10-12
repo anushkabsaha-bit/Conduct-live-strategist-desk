@@ -297,6 +297,20 @@ async def desk_state():
 
 
 # ---------- structured runs ----------
+PRIORITY_MARKETS = ["London, United Kingdom", "New York City, United States", "San Francisco Bay Area, United States", "Germany (Berlin and other tech hubs)"]
+
+
+def live_research_input(extra):
+    m = extra.get("markets")
+    if isinstance(m, str):
+        m = [x.strip() for x in m.split(",")]
+    m = [x for x in (m or []) if x and x.strip()] or PRIORITY_MARKETS
+    types = extra.get("types") or "developer conferences, hackathons, enterprise technology events and relevant communities"
+    dr = extra.get("date_range") or "next 12 to 18 months"
+    brief = f"Find {types} across {', '.join(m)} over the {dr}."
+    return {**extra, "markets": m, "types": types, "date_range": dr, "search_brief": brief}
+
+
 @api.post("/run")
 async def run_task(body: dict = Body(...)):
     task = body.get("task")
@@ -304,6 +318,10 @@ async def run_task(body: dict = Body(...)):
         raise HTTPException(400, "Unknown task")
     agent = A.TASKS[task][0]
     ref_type, ref_id, extra = body.get("ref_type"), body.get("ref_id"), body.get("input") or {}
+    web = task in A.WEB_SEARCH_TASKS
+    if task == "catherine.live_research":
+        extra = live_research_input(extra)
+        web = min(14, max(6, 3 * len(extra["markets"])))
     ctx, item = await shared_context(ref_type, ref_id)
     parts = [ctx] if ctx else []
     if task.startswith("ana.") or task in ("catherine.campaign_events", "catherine.launch_opportunities"):
@@ -323,7 +341,7 @@ async def run_task(body: dict = Body(...)):
     run = {"id": str(uuid.uuid4()), "task": task, "agent": agent, "ref_type": ref_type, "ref_id": ref_id, "input": extra, "snapshot": snapshot,
            "status": "running", "output": {}, "received": ("\n\n".join(parts))[:8000], "created_at": now()}
     await db.runs.insert_one(dict(run))
-    asyncio.create_task(execute_run(run["id"], system, A.task_prompt(task, "\n\n".join(parts)), task in A.WEB_SEARCH_TASKS))
+    asyncio.create_task(execute_run(run["id"], system, A.task_prompt(task, "\n\n".join(parts)), web))
     return run
 
 
