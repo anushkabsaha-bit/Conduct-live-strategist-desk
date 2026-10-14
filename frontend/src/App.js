@@ -1,6 +1,6 @@
 import React from "react";
 import "./App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HashRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "./components/ui/sonner";
 import Shell from "./components/Shell";
 import { PostsProvider } from "./components/Output";
@@ -24,7 +24,7 @@ import { NarrativeRoom, FounderRoom, LaunchRoom, PeopleRoom, MediaRoom, ImpactRo
 export default function App() {
   return (
     <PostsProvider>
-      <BrowserRouter>
+      <HashRouter>
         <Routes>
           <Route element={<Shell />}>
             <Route path="/" element={<Home />} />
@@ -50,7 +50,7 @@ export default function App() {
           </Route>
           <Route path="/score" element={<ScorePage />} />
         </Routes>
-      </BrowserRouter>
+      </HashRouter>
       <Toaster position="bottom-right" toastOptions={{ className: "!rounded-none !font-mono !bg-chocolate !text-linen !border-tangelo" }} />
     </PostsProvider>
   );
